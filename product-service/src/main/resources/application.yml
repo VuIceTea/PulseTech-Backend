@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: product-service
+  mongodb:
+    uri: ${MONGODB_URI:mongodb://localhost:27017/PulseTech}
+    database: PulseTech
+server:
+  port: ${PORT:8081}
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

@@ -1,0 +1,120 @@
+name: pulsetech
+
+x-java-service: &java-service
+  build:
+    context: .
+    dockerfile: Dockerfile
+  restart: unless-stopped
+  networks:
+    - pulsetech-network
+
+services:
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    networks:
+      - pulsetech-network
+
+  product-service:
+    <<: *java-service
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: product-service
+    environment:
+      PORT: 8081
+      MONGODB_URI: ${MONGODB_URI:?MONGODB_URI must be set in .env}
+    expose:
+      - "8081"
+
+  auth-service:
+    <<: *java-service
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: auth-service
+    environment:
+      PORT: 8082
+      MONGODB_URI: ${MONGODB_URI:?MONGODB_URI must be set in .env}
+      MAIL_HOST: ${MAIL_HOST:?MAIL_HOST must be set in .env}
+      MAIL_PORT: ${MAIL_PORT:?MAIL_PORT must be set in .env}
+      MAIL_USERNAME: ${MAIL_USERNAME:?MAIL_USERNAME must be set in .env}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:?MAIL_PASSWORD must be set in .env}
+      MAIL_AUTH: ${MAIL_AUTH:-false}
+      MAIL_STARTTLS: ${MAIL_STARTTLS:-false}
+      MAIL_FROM: ${MAIL_FROM:?MAIL_FROM must be set in .env}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+    expose:
+      - "8082"
+
+  order-service:
+    <<: *java-service
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: order-service
+    environment:
+      PORT: 8083
+      MONGODB_URI: ${MONGODB_URI:?MONGODB_URI must be set in .env}
+      PRODUCT_SERVICE_URL: http://product-service:8081
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+    depends_on:
+      product-service:
+        condition: service_started
+      redis:
+        condition: service_started
+    expose:
+      - "8083"
+
+  api-gateway:
+    <<: *java-service
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: api-gateway
+    environment:
+      PORT: 8080
+      PRODUCT_SERVICE_URL: http://product-service:8081
+      AUTH_SERVICE_URL: http://auth-service:8082
+      ORDER_SERVICE_URL: http://order-service:8083
+      FRONTEND_URL: http://localhost:3000
+    depends_on:
+      product-service:
+        condition: service_started
+      auth-service:
+        condition: service_started
+      order-service:
+        condition: service_started
+    ports:
+      - "8080:8080"
+
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+      args:
+        API_URL: http://api-gateway:8080
+    environment:
+      API_URL: http://api-gateway:8080
+      PORT: 3000
+      HOSTNAME: 0.0.0.0
+    depends_on:
+      api-gateway:
+        condition: service_started
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+    networks:
+      - pulsetech-network
+
+
+networks:
+  pulsetech-network:
+    driver: bridge

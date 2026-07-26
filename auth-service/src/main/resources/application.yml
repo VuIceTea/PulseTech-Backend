@@ -1,0 +1,30 @@
+spring:
+  application:
+    name: auth-service
+  mongodb:
+    uri: ${MONGODB_URI:mongodb://localhost:27017/PulseTech}
+    database: PulseTech
+  data:
+    mongodb:
+      auto-index-creation: true
+  mail:
+    host: ${MAIL_HOST}
+    port: ${MAIL_PORT}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: ${MAIL_AUTH:false}
+          starttls:
+            enable: ${MAIL_STARTTLS:false}
+server:
+  port: ${PORT:8082}
+app:
+  frontend-url: ${FRONTEND_URL:http://localhost:3000}
+  mail-from: ${MAIL_FROM}
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
