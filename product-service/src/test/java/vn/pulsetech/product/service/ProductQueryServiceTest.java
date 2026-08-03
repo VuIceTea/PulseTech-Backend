@@ -26,6 +26,6 @@ class ProductQueryServiceTest {
 
     private Product product(String id, String name, String brand, String category) {
         return new Product(id, name, brand, category, 1, 1, 0, "", List.of(), List.of(),
-                List.of(), null, "", 0, 0, List.of(), false, false, "");
+                List.of(), null, "", 0, 0, false, false, "", 10);
     }
 }

@@ -1,13 +1,13 @@
 package vn.pulsetech.order.domain;
 
 import org.springframework.data.annotation.Id;
-import org.springframework.data.redis.core.RedisHash;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-@RedisHash("cart")
+@Document(collection = "carts")
 public class Cart implements Serializable {
     @Id
     private String id; // This will be the userId (email or guestId)
