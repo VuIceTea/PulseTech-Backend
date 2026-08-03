@@ -2,7 +2,7 @@ spring:
   application:
     name: product-service
   mongodb:
-    uri: ${MONGODB_URI:mongodb://localhost:27017/PulseTech}
+    uri: ${MONGODB_URI:mongodb+srv://zozotrong123456_db_user:20030411@cluster0.nw4emic.mongodb.net/PulseTech?retryWrites=true&w=majority}
     database: PulseTech
 server:
   port: ${PORT:8081}

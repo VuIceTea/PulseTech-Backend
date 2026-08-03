@@ -22,12 +22,14 @@ public record Product(
         String description,
         double rating,
         int reviewsCount,
-        List<Review> reviews,
         boolean isFeatured,
         boolean isFlashSale,
         String badge,
         int stock
 ) {
+    public Product withDiscountAndPrice(int newDiscount, long newBasePrice) {
+        return new Product(id, name, brand, category, newBasePrice, originalPrice, newDiscount, image, images, colors, storages, specs, description, rating, reviewsCount, isFeatured, isFlashSale, badge, stock);
+    }
 
     public record ColorVariant(
             String name,
@@ -38,14 +40,6 @@ public record Product(
     public record StorageVariant(
             String name,
             long priceOffset
-    ) {}
-
-    public record Review(
-            String id,
-            String user,
-            int rating,
-            String comment,
-            String date
     ) {}
 
     public record ProductSpec(

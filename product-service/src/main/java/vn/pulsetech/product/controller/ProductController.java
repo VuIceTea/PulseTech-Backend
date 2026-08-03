@@ -3,6 +3,8 @@ package vn.pulsetech.product.controller;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import vn.pulsetech.product.domain.Product;
+import vn.pulsetech.product.dto.UpdateDiscountRequest;
+import vn.pulsetech.product.service.ProductCommandService;
 import vn.pulsetech.product.service.ProductQueryService;
 
 import java.util.List;
@@ -11,7 +13,12 @@ import java.util.List;
 @RequestMapping("/api/products")
 public class ProductController {
     private final ProductQueryService service;
-    public ProductController(ProductQueryService service) { this.service = service; }
+    private final ProductCommandService commandService;
+
+    public ProductController(ProductQueryService service, ProductCommandService commandService) { 
+        this.service = service; 
+        this.commandService = commandService;
+    }
 
     @GetMapping
     public List<Product> getProducts(@RequestParam(required = false) String category,
@@ -25,5 +32,14 @@ public class ProductController {
     @GetMapping("/{id}")
     public ResponseEntity<Product> getProduct(@PathVariable String id) {
         return service.findById(id).map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @PatchMapping("/{id}/discount")
+    public ResponseEntity<Product> updateDiscount(@PathVariable String id, @RequestBody UpdateDiscountRequest request) {
+        try {
+            return ResponseEntity.ok(commandService.updateDiscount(id, request.discount()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 }
