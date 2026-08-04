@@ -24,6 +24,10 @@ spring:
               '[/**]':
                 allowedOrigins:
                   - ${FRONTEND_URL:http://localhost:3000}
+                  - http://localhost:3000
+                allowedOriginPatterns:
+                  - "https://*.vercel.app"
+                  - "http://localhost:*"
                 allowedMethods: [GET, POST, PUT, DELETE, OPTIONS]
                 allowedHeaders: '*'
 server:
