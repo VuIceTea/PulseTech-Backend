@@ -18,4 +18,12 @@ public class ProductCommandService {
         Product updatedProduct = product.withDiscountAndPrice(discount, newBasePrice);
         return repository.save(updatedProduct);
     }
+
+    public Product save(Product product) {
+        return repository.save(product);
+    }
+
+    public void deleteById(String id) {
+        repository.deleteById(id);
+    }
 }

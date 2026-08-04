@@ -27,4 +27,15 @@ public class AuthController {
     public VerifyResponse verify(@RequestParam String token) {
         return service.verify(token);
     }
+
+    @GetMapping("/users")
+    public java.util.List<UserResponse> getAllUsers() {
+        return service.getAllUsers();
+    }
+
+    @DeleteMapping("/users/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteUser(@PathVariable String id) {
+        service.deleteUser(id);
+    }
 }

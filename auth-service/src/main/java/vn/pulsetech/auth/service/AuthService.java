@@ -83,6 +83,16 @@ public class AuthService {
         return new VerifyResponse("Xác thực email thành công");
     }
 
+    public java.util.List<UserResponse> getAllUsers() {
+        return users.findAll().stream()
+                .map(UserResponse::from)
+                .toList();
+    }
+
+    public void deleteUser(String id) {
+        users.deleteById(id);
+    }
+
     private ResponseStatusException unauthorized() {
         return new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Email hoặc mật khẩu không đúng");
     }

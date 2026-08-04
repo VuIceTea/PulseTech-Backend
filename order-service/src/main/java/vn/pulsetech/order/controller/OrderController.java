@@ -31,4 +31,14 @@ public class OrderController {
     public void cancelOrder(@RequestParam String orderId) {
         service.cancelOrder(orderId);
     }
+
+    @GetMapping("/all")
+    public java.util.List<OrderResponse> getAllOrders() {
+        return service.getAllOrders();
+    }
+
+    @PatchMapping("/{id}/status")
+    public void updateOrderStatus(@PathVariable String id, @RequestParam int status) {
+        service.updateOrderStatus(id, status);
+    }
 }

@@ -69,6 +69,13 @@ public class OrderService {
                 .toList();
     }
 
+    public java.util.List<OrderResponse> getAllOrders() {
+        return orders.findAll().stream()
+                .sorted((o1, o2) -> o2.getCreatedAt().compareTo(o1.getCreatedAt()))
+                .map(order -> OrderResponse.from(order, null))
+                .toList();
+    }
+
     public void cancelOrder(String orderId) {
         CustomerOrder order = orders.findById(orderId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy đơn hàng"));
