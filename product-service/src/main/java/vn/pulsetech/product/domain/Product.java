@@ -34,7 +34,8 @@ public record Product(
     public record ColorVariant(
             String name,
             String hex,
-            String image
+            String image,
+            List<String> images
     ) {}
 
     public record StorageVariant(

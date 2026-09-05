@@ -9,7 +9,9 @@
     "discount": 14,
     "image": "/hot-sale/iphone-15-pro-max.png",
     "images": [
-      "/hot-sale/iphone-15-pro-max.png"
+      "/hot-sale/iphone-15-pro-max.png",
+      "https://images.unsplash.com/photo-1695048133142-1a20484d2569?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1592750475338-74b7b21085ab?q=80&w=800&auto=format&fit=crop"
     ],
     "colors": [
       {
@@ -86,7 +88,9 @@
     "discount": 20,
     "image": "/hot-sale/samsung-galaxy-s24-ultra.png",
     "images": [
-      "/hot-sale/samsung-galaxy-s24-ultra.png"
+      "/hot-sale/samsung-galaxy-s24-ultra.png",
+      "https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1580910051074-3eb694886505?q=80&w=800&auto=format&fit=crop"
     ],
     "colors": [
       {
@@ -163,7 +167,9 @@
     "discount": 12,
     "image": "/hot-sale/xiaomi-14-ultra.png",
     "images": [
-      "/hot-sale/xiaomi-14-ultra.png"
+      "/hot-sale/xiaomi-14-ultra.png",
+      "https://images.unsplash.com/photo-1598327105666-5b89351aff97?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?q=80&w=800&auto=format&fit=crop"
     ],
     "colors": [
       {
@@ -220,7 +226,9 @@
     "discount": 15,
     "image": "/hot-sale/iphone-15.png",
     "images": [
-      "/hot-sale/iphone-15.png"
+      "/hot-sale/iphone-15.png",
+      "https://images.unsplash.com/photo-1556656793-08538906a9f8?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1591337676887-a217a6b94f2f?q=80&w=800&auto=format&fit=crop"
     ],
     "colors": [
       {
@@ -286,7 +294,9 @@
     "discount": 13,
     "image": "/hot-sale/samsung-galaxy-a55.png",
     "images": [
-      "/hot-sale/samsung-galaxy-a55.png"
+      "/hot-sale/samsung-galaxy-a55.png",
+      "https://images.unsplash.com/photo-1585060544812-6b45742d762f?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1559363126-7f4029e3f35c?q=80&w=800&auto=format&fit=crop"
     ],
     "colors": [
       {
@@ -339,7 +349,9 @@
     "discount": 3,
     "image": "https://images.unsplash.com/photo-1589739900243-4b52cd9b104e?q=80&w=600&auto=format&fit=crop",
     "images": [
-      "https://images.unsplash.com/photo-1589739900243-4b52cd9b104e?q=80&w=600&auto=format&fit=crop"
+      "https://images.unsplash.com/photo-1589739900243-4b52cd9b104e?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1561154464-82e9aab32764?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1585790050230-5dd28404ccb9?q=80&w=800&auto=format&fit=crop"
     ],
     "colors": [
       {
@@ -400,7 +412,9 @@
     "discount": 15,
     "image": "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?q=80&w=600&auto=format&fit=crop",
     "images": [
-      "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?q=80&w=600&auto=format&fit=crop"
+      "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1542751110-97427bbecf20?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1632882765546-1ee75f53becb?q=80&w=800&auto=format&fit=crop"
     ],
     "colors": [
       {
@@ -449,7 +463,9 @@
     "discount": 6,
     "image": "/accessories/airpod-pro-gen2.png",
     "images": [
-      "/accessories/airpod-pro-gen2.png"
+      "/accessories/airpod-pro-gen2.png",
+      "https://images.unsplash.com/photo-1600294037681-c80b4cb5b434?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1603351154351-5e2d0600bb77?q=80&w=800&auto=format&fit=crop"
     ],
     "colors": [
       {
@@ -496,7 +512,9 @@
     "discount": 17,
     "image": "/accessories/day-sac-nhanh-typec-to-lightning.webp",
     "images": [
-      "/accessories/day-sac-nhanh-typec-to-lightning.webp"
+      "/accessories/day-sac-nhanh-typec-to-lightning.webp",
+      "https://images.unsplash.com/photo-1583394838336-acd977736f90?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1601999109332-542b18dbfb24?q=80&w=800&auto=format&fit=crop"
     ],
     "colors": [
       {
@@ -543,7 +561,9 @@
     "discount": 22,
     "image": "/accessories/cu-sac-nhanh-samsung-typeC.webp",
     "images": [
-      "/accessories/cu-sac-nhanh-samsung-typeC.webp"
+      "/accessories/cu-sac-nhanh-samsung-typeC.webp",
+      "https://images.unsplash.com/photo-1583863788434-e58a36330cf0?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1618438051226-5e9f0956af76?q=80&w=800&auto=format&fit=crop"
     ],
     "colors": [
       {
@@ -590,7 +610,9 @@
     "discount": 23,
     "image": "/accessories/op-lung-iphone-15-pro-trong-suot-magsafe.png",
     "images": [
-      "/accessories/op-lung-iphone-15-pro-trong-suot-magsafe.png"
+      "/accessories/op-lung-iphone-15-pro-trong-suot-magsafe.png",
+      "https://images.unsplash.com/photo-1601593346740-925c2a8d44ae?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1609692814859-b545338b0a7d?q=80&w=800&auto=format&fit=crop"
     ],
     "colors": [
       {

@@ -17,10 +17,11 @@ public class DemoDataConfig {
     @Bean
     ApplicationRunner seedProductData(ProductCatalogRepository repository, ObjectMapper objectMapper) {
         return args -> {
-            if (repository.count() == 0) {
-                try (InputStream input = new ClassPathResource("products.json").getInputStream()) {
-                    List<Product> products = objectMapper.readValue(input, new TypeReference<List<Product>>() {});
-                    repository.saveAll(products);
+            try (InputStream input = new ClassPathResource("products.json").getInputStream()) {
+                List<Product> products = objectMapper.readValue(input, new TypeReference<List<Product>>() {});
+                // Always re-sync: update existing products and add new ones from JSON
+                for (Product p : products) {
+                    repository.save(p);
                 }
             }
         };
