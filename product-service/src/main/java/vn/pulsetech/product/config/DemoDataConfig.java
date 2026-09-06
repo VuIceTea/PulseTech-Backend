@@ -19,9 +19,11 @@ public class DemoDataConfig {
         return args -> {
             try (InputStream input = new ClassPathResource("products.json").getInputStream()) {
                 List<Product> products = objectMapper.readValue(input, new TypeReference<List<Product>>() {});
-                // Always re-sync: update existing products and add new ones from JSON
+                // Only seed if the product doesn't exist to prevent overwriting user edits
                 for (Product p : products) {
-                    repository.save(p);
+                    if (!repository.existsById(p.id())) {
+                        repository.save(p);
+                    }
                 }
             }
         };
