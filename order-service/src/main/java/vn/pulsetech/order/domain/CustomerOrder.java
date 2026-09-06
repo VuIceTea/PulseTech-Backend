@@ -37,6 +37,7 @@ public class CustomerOrder {
 
     public void addItem(CustomerOrderItem item) { items.add(item); totalPrice += item.getPrice() * item.getQty(); }
     public void applyDiscount(int percent) { totalPrice = Math.round(totalPrice * (100 - percent) / 100.0); }
+    public void applyFixedDiscount(long amount) { totalPrice = Math.max(0, totalPrice - amount); }
     public void addShipping(long amount) { totalPrice += amount; }
     public void setStatus(int status) { this.status = status; }
     public String getId() { return id; }

@@ -5,12 +5,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import vn.pulsetech.order.client.ProductClient;
 import vn.pulsetech.order.client.ProductClient.ProductSnapshot;
+import vn.pulsetech.order.domain.Coupon;
 import vn.pulsetech.order.domain.CustomerOrder;
 import vn.pulsetech.order.domain.CustomerOrderItem;
 import vn.pulsetech.order.dto.OrderDtos.*;
+import vn.pulsetech.order.repository.CouponRepository;
 import vn.pulsetech.order.repository.CustomerOrderRepository;
 
+import java.time.LocalDateTime;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
 
 @Service
@@ -18,11 +22,13 @@ public class OrderService {
     private final CustomerOrderRepository orders;
     private final ProductClient products;
     private final PaymentService paymentService;
+    private final CouponRepository coupons;
 
-    public OrderService(CustomerOrderRepository orders, ProductClient products, PaymentService paymentService) {
+    public OrderService(CustomerOrderRepository orders, ProductClient products, PaymentService paymentService, CouponRepository coupons) {
         this.orders = orders;
         this.products = products;
         this.paymentService = paymentService;
+        this.coupons = coupons;
     }
 
     public OrderResponse create(CreateOrderRequest request) {
@@ -43,8 +49,23 @@ public class OrderService {
             order.addItem(new CustomerOrderItem(product.id(), product.name(), price, itemRequest.quantity(),
                     image, itemRequest.color(), itemRequest.storage()));
         }
-        if ("PULSETECH".equalsIgnoreCase(request.couponCode()) || "CELLPHONES".equalsIgnoreCase(request.couponCode())) {
-            order.applyDiscount(10);
+        // Apply coupon discount from database
+        if (request.couponCode() != null && !request.couponCode().isBlank()) {
+            Optional<Coupon> couponOpt = coupons.findByCode(request.couponCode().trim().toUpperCase());
+            if (couponOpt.isPresent()) {
+                Coupon coupon = couponOpt.get();
+                if (coupon.isValid() && order.getTotalPrice() >= coupon.minOrderValue()) {
+                    if (coupon.discountPercent() > 0) {
+                        long discount = Math.round(order.getTotalPrice() * coupon.discountPercent() / 100.0);
+                        if (coupon.maxDiscountValue() > 0) {
+                            discount = Math.min(discount, coupon.maxDiscountValue());
+                        }
+                        order.applyFixedDiscount(discount);
+                    } else if (coupon.discountAmount() > 0) {
+                        order.applyFixedDiscount(Math.round(coupon.discountAmount()));
+                    }
+                }
+            }
         }
         if (order.getTotalPrice() <= 5_000_000) order.addShipping(30_000);
         order = orders.save(order);
