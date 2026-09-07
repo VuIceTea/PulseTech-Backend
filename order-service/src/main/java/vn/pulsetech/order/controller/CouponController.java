@@ -18,18 +18,37 @@ public class CouponController {
         this.couponRepository = couponRepository;
     }
 
-    @GetMapping("/validate")
-    public ResponseEntity<?> validateCoupon(@RequestParam String code) {
-        Optional<Coupon> coupon = couponRepository.findByCode(code.toUpperCase());
-        if (coupon.isPresent()) {
-            Coupon c = coupon.get();
-            if (c.isValid()) {
-                return ResponseEntity.ok(c);
+    public record ValidateCouponRequest(String code, long orderAmount, List<String> productIds) {}
+    public record ValidateCouponResponse(boolean success, Object data) {}
+    public record CouponDto(String code, long discountAmount, String discountType, long finalAmount) {}
+
+    @PostMapping("/validate")
+    public ResponseEntity<ValidateCouponResponse> validateCoupon(@RequestBody ValidateCouponRequest request) {
+        if (request.code() == null || request.code().isBlank()) {
+            return ResponseEntity.badRequest().body(new ValidateCouponResponse(false, "Invalid coupon code"));
+        }
+        Optional<Coupon> couponOpt = couponRepository.findByCode(request.code().toUpperCase().trim());
+        if (couponOpt.isPresent()) {
+            Coupon c = couponOpt.get();
+            if (c.isValid() && request.orderAmount() >= c.minOrderValue()) {
+                long discountAmount = 0;
+                String discountType = "FIXED";
+                if (c.discountPercent() > 0) {
+                    discountType = "PERCENTAGE";
+                    discountAmount = Math.round(request.orderAmount() * c.discountPercent() / 100.0);
+                    if (c.maxDiscountValue() > 0) {
+                        discountAmount = Math.min(discountAmount, c.maxDiscountValue());
+                    }
+                } else if (c.discountAmount() > 0) {
+                    discountAmount = Math.round(c.discountAmount());
+                }
+                long finalAmount = Math.max(0, request.orderAmount() - discountAmount);
+                return ResponseEntity.ok(new ValidateCouponResponse(true, new CouponDto(c.code(), discountAmount, discountType, finalAmount)));
             } else {
-                return ResponseEntity.badRequest().body("Coupon is expired or fully used.");
+                return ResponseEntity.badRequest().body(new ValidateCouponResponse(false, "Coupon is expired, fully used, or order amount is too low."));
             }
         }
-        return ResponseEntity.notFound().build();
+        return ResponseEntity.status(404).body(new ValidateCouponResponse(false, "Coupon not found"));
     }
 
     @GetMapping
