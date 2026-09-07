@@ -106,10 +106,10 @@ public class DemoContentConfig {
                                         new MegaMenu.MegaMenuLink("Xiaomi Redmi", "/products?brand=Xiaomi&category=phone"),
                                         new MegaMenu.MegaMenuLink("OPPO / Realme", "/products?brand=OPPO&category=phone"))),
                                 new MegaMenu.MegaMenuSection("Mức giá", List.of(
-                                        new MegaMenu.MegaMenuLink("Dưới 5 triệu", "/products?price=under5"),
-                                        new MegaMenu.MegaMenuLink("Từ 5 - 10 triệu", "/products?price=5to10"),
-                                        new MegaMenu.MegaMenuLink("Từ 10 - 20 triệu", "/products?price=10to20"),
-                                        new MegaMenu.MegaMenuLink("Trên 20 triệu", "/products?price=over20")))),
+                                        new MegaMenu.MegaMenuLink("Dưới 5 triệu", "/products?price=under5&category=phone"),
+                                        new MegaMenu.MegaMenuLink("Từ 5 - 10 triệu", "/products?price=5to10&category=phone"),
+                                        new MegaMenu.MegaMenuLink("Từ 10 - 20 triệu", "/products?price=10to20&category=phone"),
+                                        new MegaMenu.MegaMenuLink("Trên 20 triệu", "/products?price=over20&category=phone")))),
                                 1),
                         new MegaMenu("mm-2", "Máy tính bảng (Tablet)", "Tablet", "/products?category=tablet", List.of(
                                 new MegaMenu.MegaMenuSection("Thương hiệu", List.of(
