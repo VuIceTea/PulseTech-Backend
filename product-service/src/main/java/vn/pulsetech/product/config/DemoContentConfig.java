@@ -101,10 +101,10 @@ public class DemoContentConfig {
                 megaMenuRepository.saveAll(List.of(
                         new MegaMenu("mm-1", "Điện thoại di động", "Smartphone", "/products?category=phone", List.of(
                                 new MegaMenu.MegaMenuSection("Hãng sản xuất", List.of(
-                                        new MegaMenu.MegaMenuLink("iPhone (Apple)", "/products?brand=Apple"),
-                                        new MegaMenu.MegaMenuLink("Samsung Galaxy", "/products?brand=Samsung"),
-                                        new MegaMenu.MegaMenuLink("Xiaomi Redmi", "/products?brand=Xiaomi"),
-                                        new MegaMenu.MegaMenuLink("OPPO / Realme", "/products?brand=OPPO"))),
+                                        new MegaMenu.MegaMenuLink("iPhone (Apple)", "/products?brand=Apple&category=phone"),
+                                        new MegaMenu.MegaMenuLink("Samsung Galaxy", "/products?brand=Samsung&category=phone"),
+                                        new MegaMenu.MegaMenuLink("Xiaomi Redmi", "/products?brand=Xiaomi&category=phone"),
+                                        new MegaMenu.MegaMenuLink("OPPO / Realme", "/products?brand=OPPO&category=phone"))),
                                 new MegaMenu.MegaMenuSection("Mức giá", List.of(
                                         new MegaMenu.MegaMenuLink("Dưới 5 triệu", "/products?price=under5"),
                                         new MegaMenu.MegaMenuLink("Từ 5 - 10 triệu", "/products?price=5to10"),
