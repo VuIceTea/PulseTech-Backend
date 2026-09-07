@@ -36,7 +36,7 @@ public class OrderService {
                 request.customerPhone().trim(), request.address().trim(), paymentName(request.paymentMethod()));
         for (OrderItemRequest itemRequest : request.items()) {
             ProductSnapshot product = products.getRequiredProduct(itemRequest.productId());
-            long price = Math.round(product.basePrice() * (1 - product.discount() / 100.0));
+            long price = product.basePrice();
             if (product.storages() != null) {
                 price += product.storages().stream().filter(s -> itemRequest.storage().equals(s.name()))
                         .mapToLong(ProductSnapshot.StorageVariant::priceOffset).findFirst().orElse(0);
