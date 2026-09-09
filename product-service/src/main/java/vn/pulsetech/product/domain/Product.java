@@ -32,6 +32,10 @@ public record Product(
         return new Product(id, name, brand, category, newBasePrice, originalPrice, newDiscount, image, images, colors, storages, specs, description, content, rating, reviewsCount, isFeatured, isFlashSale, badge, stock);
     }
 
+    public Product withContent(String newContent) {
+        return new Product(id, name, brand, category, basePrice, originalPrice, discount, image, images, colors, storages, specs, description, newContent, rating, reviewsCount, isFeatured, isFlashSale, badge, stock);
+    }
+
     public record ColorVariant(
             String name,
             String hex,
