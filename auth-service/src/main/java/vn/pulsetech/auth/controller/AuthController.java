@@ -33,6 +33,12 @@ public class AuthController {
         return service.getAllUsers();
     }
 
+    @PostMapping("/users/reward-points")
+    @ResponseStatus(HttpStatus.OK)
+    public void addRewardPoints(@RequestParam String email, @RequestParam int points) {
+        service.addRewardPoints(email, points);
+    }
+
     @DeleteMapping("/users/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteUser(@PathVariable String id) {

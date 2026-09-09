@@ -11,9 +11,9 @@ public final class AuthDtos {
     public record RegisterRequest(@NotBlank String name, @Email @NotBlank String email,
                                   @Size(min = 6) String password) {}
     public record LoginRequest(@Email @NotBlank String email, @NotBlank String password) {}
-    public record UserResponse(String id, String name, String email) {
+    public record UserResponse(String id, String name, String email, int rewardPoints) {
         public static UserResponse from(AppUser user) {
-            return new UserResponse(user.getId(), user.getName(), user.getEmail());
+            return new UserResponse(user.getId(), user.getName(), user.getEmail(), user.getRewardPoints());
         }
     }
     public record RegisterResponse(String email, String message) {}

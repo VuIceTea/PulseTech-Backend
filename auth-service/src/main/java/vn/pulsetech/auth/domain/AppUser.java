@@ -13,6 +13,7 @@ public class AppUser {
     private String email;
     private String passwordHash;
     private boolean verified;
+    private int rewardPoints;
 
     protected AppUser() {}
 
@@ -21,6 +22,7 @@ public class AppUser {
         this.email = email;
         this.passwordHash = passwordHash;
         this.verified = false;
+        this.rewardPoints = 0;
     }
 
     public void markVerified() { this.verified = true; }
@@ -29,4 +31,6 @@ public class AppUser {
     public String getEmail() { return email; }
     public String getPasswordHash() { return passwordHash; }
     public boolean isVerified() { return verified; }
+    public int getRewardPoints() { return rewardPoints; }
+    public void addRewardPoints(int points) { this.rewardPoints += points; }
 }

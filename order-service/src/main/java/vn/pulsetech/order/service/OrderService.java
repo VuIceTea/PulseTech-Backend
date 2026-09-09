@@ -4,6 +4,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import vn.pulsetech.order.client.ProductClient;
+import vn.pulsetech.order.client.AuthClient;
 import vn.pulsetech.order.client.ProductClient.ProductSnapshot;
 import vn.pulsetech.order.domain.Coupon;
 import vn.pulsetech.order.domain.CustomerOrder;
@@ -23,12 +24,14 @@ public class OrderService {
     private final ProductClient products;
     private final PaymentService paymentService;
     private final CouponRepository coupons;
+    private final AuthClient authClient;
 
-    public OrderService(CustomerOrderRepository orders, ProductClient products, PaymentService paymentService, CouponRepository coupons) {
+    public OrderService(CustomerOrderRepository orders, ProductClient products, PaymentService paymentService, CouponRepository coupons, AuthClient authClient) {
         this.orders = orders;
         this.products = products;
         this.paymentService = paymentService;
         this.coupons = coupons;
+        this.authClient = authClient;
     }
 
     public OrderResponse create(CreateOrderRequest request) {
@@ -75,6 +78,11 @@ public class OrderService {
             paymentUrl = paymentService.createPaymentUrl(order.getId(), order.getTotalPrice());
         }
         
+        int rewardPoints = (int) (order.getTotalPrice() / 1000);
+        if (rewardPoints > 0) {
+            authClient.addRewardPoints(order.getCustomerEmail(), rewardPoints);
+        }
+
         return OrderResponse.from(order, paymentUrl);
     }
 

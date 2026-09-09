@@ -59,10 +59,16 @@ public class AuthService {
             throw unauthorized();
         }
         if (!user.isVerified()) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
-                    "Vui lòng xác thực email trước khi đăng nhập");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Tài khoản chưa được xác thực");
         }
         return UserResponse.from(user);
+    }
+
+    public void addRewardPoints(String email, int points) {
+        AppUser user = users.findByEmailIgnoreCase(email.trim())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Người dùng không tồn tại"));
+        user.addRewardPoints(points);
+        users.save(user);
     }
 
     public VerifyResponse verify(String rawToken) {

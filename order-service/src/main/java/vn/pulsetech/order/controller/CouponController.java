@@ -18,18 +18,21 @@ public class CouponController {
         this.couponRepository = couponRepository;
     }
 
-    public record ValidateCouponRequest(String code, long orderAmount, List<String> productIds) {}
+    public record ValidateCouponRequest(String code, long orderAmount, List<String> productIds, String customerEmail) {}
     public record ValidateCouponResponse(boolean success, Object data) {}
     public record CouponDto(String code, long discountAmount, String discountType, long finalAmount) {}
 
     @PostMapping("/validate")
     public ResponseEntity<ValidateCouponResponse> validateCoupon(@RequestBody ValidateCouponRequest request) {
         if (request.code() == null || request.code().isBlank()) {
-            return ResponseEntity.badRequest().body(new ValidateCouponResponse(false, "Invalid coupon code"));
+            return ResponseEntity.ok(new ValidateCouponResponse(false, "Vui lòng nhập mã giảm giá."));
         }
         Optional<Coupon> couponOpt = couponRepository.findByCode(request.code().toUpperCase().trim());
         if (couponOpt.isPresent()) {
             Coupon c = couponOpt.get();
+            if (!c.isAllowedFor(request.customerEmail())) {
+                return ResponseEntity.ok(new ValidateCouponResponse(false, "Mã giảm giá này không áp dụng cho tài khoản của bạn."));
+            }
             if (c.isValid() && request.orderAmount() >= c.minOrderValue()) {
                 long discountAmount = 0;
                 String discountType = "FIXED";
@@ -45,15 +48,19 @@ public class CouponController {
                 long finalAmount = Math.max(0, request.orderAmount() - discountAmount);
                 return ResponseEntity.ok(new ValidateCouponResponse(true, new CouponDto(c.code(), discountAmount, discountType, finalAmount)));
             } else {
-                return ResponseEntity.badRequest().body(new ValidateCouponResponse(false, "Coupon is expired, fully used, or order amount is too low."));
+                return ResponseEntity.ok(new ValidateCouponResponse(false, "Mã giảm giá không hợp lệ, đã hết hạn hoặc đơn hàng chưa đủ điều kiện."));
             }
         }
-        return ResponseEntity.status(404).body(new ValidateCouponResponse(false, "Coupon not found"));
+        return ResponseEntity.ok(new ValidateCouponResponse(false, "Mã giảm giá không tồn tại."));
     }
 
     @GetMapping
-    public ResponseEntity<List<Coupon>> getAllCoupons() {
-        return ResponseEntity.ok(couponRepository.findAll());
+    public ResponseEntity<List<Coupon>> getAllCoupons(@RequestParam(required = false) String email) {
+        List<Coupon> all = couponRepository.findAll();
+        if (email != null && !email.isBlank()) {
+            return ResponseEntity.ok(all.stream().filter(c -> c.isAllowedFor(email)).toList());
+        }
+        return ResponseEntity.ok(all);
     }
 
     @PostMapping
@@ -71,7 +78,8 @@ public class CouponController {
                 coupon.validUntil() != null ? coupon.validUntil() : LocalDateTime.now().plusMonths(1),
                 coupon.currentUsage(),
                 coupon.maxUsage() > 0 ? coupon.maxUsage() : 100,
-                coupon.isActive()
+                coupon.isActive(),
+                coupon.assignedEmails()
         );
         return ResponseEntity.ok(couponRepository.save(newCoupon));
     }
@@ -93,7 +101,8 @@ public class CouponController {
                 coupon.validUntil(),
                 coupon.currentUsage(),
                 coupon.maxUsage(),
-                coupon.isActive()
+                coupon.isActive(),
+                coupon.assignedEmails()
         );
         return ResponseEntity.ok(couponRepository.save(updatedCoupon));
     }

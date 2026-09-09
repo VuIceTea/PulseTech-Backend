@@ -20,6 +20,7 @@ public record Product(
         List<StorageVariant> storages,
         ProductSpec specs,
         String description,
+        String content,
         double rating,
         int reviewsCount,
         boolean isFeatured,
@@ -28,7 +29,7 @@ public record Product(
         int stock
 ) {
     public Product withDiscountAndPrice(int newDiscount, long newBasePrice) {
-        return new Product(id, name, brand, category, newBasePrice, originalPrice, newDiscount, image, images, colors, storages, specs, description, rating, reviewsCount, isFeatured, isFlashSale, badge, stock);
+        return new Product(id, name, brand, category, newBasePrice, originalPrice, newDiscount, image, images, colors, storages, specs, description, content, rating, reviewsCount, isFeatured, isFlashSale, badge, stock);
     }
 
     public record ColorVariant(

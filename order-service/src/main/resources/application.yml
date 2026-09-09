@@ -9,6 +9,8 @@ server:
 services:
   product:
     base-url: ${PRODUCT_SERVICE_URL:http://localhost:8081}
+  auth:
+    base-url: ${AUTH_SERVICE_URL:http://localhost:8080}
 management:
   endpoints:
     web:
