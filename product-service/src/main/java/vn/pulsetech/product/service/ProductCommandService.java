@@ -22,14 +22,15 @@ public class ProductCommandService {
     public Product save(Product product) {
         if (product.storages() != null && !product.storages().isEmpty()) {
             int totalStock = 0;
-            boolean hasVariantStock = false;
+            boolean allVariantsHaveStock = true;
             for (var storage : product.storages()) {
                 if (storage.stock() != null) {
                     totalStock += storage.stock();
-                    hasVariantStock = true;
+                } else {
+                    allVariantsHaveStock = false;
                 }
             }
-            if (hasVariantStock) {
+            if (allVariantsHaveStock) {
                 product = product.withStock(totalStock);
             }
         }
