@@ -45,7 +45,9 @@ public record Product(
 
     public record StorageVariant(
             String name,
-            long priceOffset
+            long priceOffset,
+            Integer stock,
+            ProductSpec specs
     ) {}
 
     public record ProductSpec(
