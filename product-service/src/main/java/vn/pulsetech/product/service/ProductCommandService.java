@@ -20,6 +20,19 @@ public class ProductCommandService {
     }
 
     public Product save(Product product) {
+        if (product.storages() != null && !product.storages().isEmpty()) {
+            int totalStock = 0;
+            boolean hasVariantStock = false;
+            for (var storage : product.storages()) {
+                if (storage.stock() != null) {
+                    totalStock += storage.stock();
+                    hasVariantStock = true;
+                }
+            }
+            if (hasVariantStock) {
+                product = product.withStock(totalStock);
+            }
+        }
         return repository.save(product);
     }
 
