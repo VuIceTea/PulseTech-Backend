@@ -22,17 +22,14 @@ public class ProductCommandService {
     public Product save(Product product) {
         if (product.storages() != null && !product.storages().isEmpty()) {
             int totalStock = 0;
-            boolean allVariantsHaveStock = true;
             for (var storage : product.storages()) {
                 if (storage.stock() != null) {
                     totalStock += storage.stock();
-                } else {
-                    allVariantsHaveStock = false;
                 }
             }
-            if (allVariantsHaveStock) {
-                product = product.withStock(totalStock);
-            }
+            product = product.withStock(totalStock);
+        } else {
+            product = product.withStock(0);
         }
         return repository.save(product);
     }

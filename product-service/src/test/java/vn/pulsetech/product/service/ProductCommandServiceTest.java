@@ -10,13 +10,14 @@ import static org.mockito.Mockito.*;
 
 class ProductCommandServiceTest {
     @Test
-    void preservesSharedStockWhenVariantStockIsMissing() {
+    void missingVariantStockNeverInheritsParentStock() {
         assertThat(save(0, null, null).stock()).isZero();
-        assertThat(save(25, 0, null).stock()).isEqualTo(25);
+        assertThat(save(25, 0, null).stock()).isZero();
+        assertThat(save(25, null, 5).stock()).isEqualTo(5);
     }
 
     @Test
-    void sumsStockOnlyWhenEveryVariantHasItsOwnStock() {
+    void sumsIndependentVariantStock() {
         assertThat(save(25, 0, 0).stock()).isZero();
         assertThat(save(25, 0, 5).stock()).isEqualTo(5);
     }
