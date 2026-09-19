@@ -13,8 +13,17 @@ services:
     base-url: ${AUTH_SERVICE_URL:http://localhost:8080}
 app:
   frontend-url: ${FRONTEND_URL:http://localhost:3000}
+  payment:
+    callback-base-url: ${PAYMENT_CALLBACK_BASE_URL:http://localhost:8080/api/orders/payment}
   vnpay:
     return-url: ${VNPAY_RETURN_URL:http://localhost:8080/api/orders/payment/vnpay_return}
+  momo:
+    url: ${MOMO_API_URL:https://test-payment.momo.vn/v2/gateway/api/create}
+    partner-code: ${MOMO_PARTNER_CODE:}
+    access-key: ${MOMO_ACCESS_KEY:}
+    secret-key: ${MOMO_SECRET_KEY:}
+  stripe:
+    secret-key: ${STRIPE_SECRET_KEY:}
 management:
   endpoints:
     web:

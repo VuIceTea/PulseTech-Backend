@@ -37,7 +37,7 @@ public class OrderService {
 
     public OrderResponse create(CreateOrderRequest request) {
         String paymentCode = request.paymentMethod().trim().toUpperCase(Locale.ROOT);
-        if (!Set.of("COD", "VNPAY").contains(paymentCode)) {
+        if (!Set.of("COD", "VNPAY", "MOMO", "STRIPE").contains(paymentCode)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Phương thức thanh toán không được hỗ trợ");
         }
         CustomerOrder order = new CustomerOrder(generateId(), request.customerName().trim(), request.customerEmail().trim(),
@@ -88,12 +88,13 @@ public class OrderService {
             }
         }
         if (order.getTotalPrice() <= 5_000_000) order.addShipping(30_000);
-        order = orders.save(order);
-        
+
         String paymentUrl = null;
-        if ("VNPAY".equals(paymentCode)) {
-            paymentUrl = paymentService.createPaymentUrl(order.getId(), order.getTotalPrice());
+        if (!"COD".equals(paymentCode)) {
+            paymentUrl = paymentService.createPaymentUrl(paymentCode, order.getId(), order.getTotalPrice());
         }
+
+        order = orders.save(order);
         
         int rewardPoints = (int) (order.getTotalPrice() / 1000);
         if (rewardPoints > 0) {
@@ -157,6 +158,8 @@ public class OrderService {
     private String paymentName(String code) {
         return switch (code.toLowerCase(Locale.ROOT)) {
             case "vnpay" -> "Thanh toán qua VNPay QR";
+            case "momo" -> "Thanh toán qua ví MoMo";
+            case "stripe" -> "Thanh toán thẻ quốc tế qua Stripe";
             case "bank" -> "Chuyển khoản ngân hàng";
             default -> "Thanh toán khi nhận hàng (COD)";
         };

@@ -7,6 +7,8 @@ import jakarta.validation.constraints.NotEmpty;
 import vn.pulsetech.order.domain.CustomerOrder;
 
 import java.time.format.DateTimeFormatter;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Locale;
 
@@ -31,7 +33,8 @@ public final class OrderDtos {
                     i.getName(), i.getPrice(), i.getQty(), i.getImage(), i.getColor(), i.getStorage())).toList();
             return new OrderResponse(order.getId(), order.getStatus(), order.getCustomerName(), order.getCustomerEmail(),
                     order.getCustomerPhone(), order.getAddress(), order.getPaymentMethod(),
-                    order.getCreatedAt().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm", Locale.forLanguageTag("vi-VN"))),
+                    order.getCreatedAt().atZone(ZoneOffset.UTC).withZoneSameInstant(ZoneId.of("Asia/Ho_Chi_Minh"))
+                            .format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm", Locale.forLanguageTag("vi-VN"))),
                     order.getTotalPrice(), items, paymentUrl);
         }
     }

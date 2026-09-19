@@ -4,6 +4,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,7 +33,9 @@ public class CustomerOrder {
         this.customerPhone = customerPhone;
         this.address = address;
         this.paymentMethod = paymentMethod;
-        this.createdAt = LocalDateTime.now();
+        // Store a timezone-neutral UTC value in MongoDB. Convert to Vietnam
+        // time only when building API responses.
+        this.createdAt = LocalDateTime.now(ZoneOffset.UTC);
     }
 
     public void addItem(CustomerOrderItem item) { items.add(item); totalPrice += item.getPrice() * item.getQty(); }
