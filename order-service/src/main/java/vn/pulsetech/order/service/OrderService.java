@@ -16,6 +16,7 @@ import vn.pulsetech.order.repository.CustomerOrderRepository;
 import java.time.LocalDateTime;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 
 @Service
@@ -35,46 +36,62 @@ public class OrderService {
     }
 
     public OrderResponse create(CreateOrderRequest request) {
+        String paymentCode = request.paymentMethod().trim().toUpperCase(Locale.ROOT);
+        if (!Set.of("COD", "VNPAY").contains(paymentCode)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Phương thức thanh toán không được hỗ trợ");
+        }
         CustomerOrder order = new CustomerOrder(generateId(), request.customerName().trim(), request.customerEmail().trim(),
-                request.customerPhone().trim(), request.address().trim(), paymentName(request.paymentMethod()));
+                request.customerPhone().trim(), request.address().trim(), paymentName(paymentCode));
         for (OrderItemRequest itemRequest : request.items()) {
             ProductSnapshot product = products.getRequiredProduct(itemRequest.productId());
-            long price = product.basePrice();
-            if (product.storages() != null) {
-                price += product.storages().stream().filter(s -> itemRequest.storage().equals(s.name()))
-                        .mapToLong(ProductSnapshot.StorageVariant::priceOffset).findFirst().orElse(0);
+            if (product.storages() == null || product.storages().isEmpty()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Sản phẩm chưa có biến thể: " + product.name());
             }
-            String image = product.image();
-            if (product.colors() != null) {
-                image = product.colors().stream().filter(c -> itemRequest.color().equals(c.name()))
-                        .map(ProductSnapshot.ColorVariant::image).findFirst().orElse(image);
+            ProductSnapshot.StorageVariant storage = product.storages().stream()
+                    .filter(value -> itemRequest.storage().equals(value.name()))
+                    .findFirst()
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                            "Biến thể không hợp lệ cho " + product.name() + ": " + itemRequest.storage()));
+            int availableStock = storage.stock() == null ? 0 : storage.stock();
+            if (availableStock < itemRequest.quantity()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        availableStock <= 0
+                                ? "Biến thể " + itemRequest.storage() + " của " + product.name() + " đã hết hàng"
+                                : "Biến thể " + itemRequest.storage() + " của " + product.name()
+                                  + " chỉ còn " + availableStock + " sản phẩm");
             }
+            if (product.colors() == null || product.colors().stream().noneMatch(c -> itemRequest.color().equals(c.name()))) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Màu sắc không hợp lệ cho " + product.name() + ": " + itemRequest.color());
+            }
+            long price = product.basePrice() + storage.priceOffset();
+            String image = product.colors().stream().filter(c -> itemRequest.color().equals(c.name()))
+                    .map(ProductSnapshot.ColorVariant::image).findFirst().orElse(product.image());
             order.addItem(new CustomerOrderItem(product.id(), product.name(), price, itemRequest.quantity(),
                     image, itemRequest.color(), itemRequest.storage()));
         }
         // Apply coupon discount from database
         if (request.couponCode() != null && !request.couponCode().isBlank()) {
             Optional<Coupon> couponOpt = coupons.findByCode(request.couponCode().trim().toUpperCase());
-            if (couponOpt.isPresent()) {
-                Coupon coupon = couponOpt.get();
-                if (coupon.isValid() && order.getTotalPrice() >= coupon.minOrderValue()) {
-                    if (coupon.discountPercent() > 0) {
-                        long discount = Math.round(order.getTotalPrice() * coupon.discountPercent() / 100.0);
-                        if (coupon.maxDiscountValue() > 0) {
-                            discount = Math.min(discount, coupon.maxDiscountValue());
-                        }
-                        order.applyFixedDiscount(discount);
-                    } else if (coupon.discountAmount() > 0) {
-                        order.applyFixedDiscount(Math.round(coupon.discountAmount()));
-                    }
+            Coupon coupon = couponOpt.orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mã giảm giá không tồn tại"));
+            if (!coupon.isAllowedFor(request.customerEmail()) || !coupon.isValid() || order.getTotalPrice() < coupon.minOrderValue()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mã giảm giá không hợp lệ hoặc đơn hàng chưa đủ điều kiện");
+            }
+            if (coupon.discountPercent() > 0) {
+                long discount = Math.round(order.getTotalPrice() * coupon.discountPercent() / 100.0);
+                if (coupon.maxDiscountValue() > 0) {
+                    discount = Math.min(discount, coupon.maxDiscountValue());
                 }
+                order.applyFixedDiscount(discount);
+            } else if (coupon.discountAmount() > 0) {
+                order.applyFixedDiscount(Math.round(coupon.discountAmount()));
             }
         }
         if (order.getTotalPrice() <= 5_000_000) order.addShipping(30_000);
         order = orders.save(order);
         
         String paymentUrl = null;
-        if ("VNPAY".equalsIgnoreCase(request.paymentMethod())) {
+        if ("VNPAY".equals(paymentCode)) {
             paymentUrl = paymentService.createPaymentUrl(order.getId(), order.getTotalPrice());
         }
         

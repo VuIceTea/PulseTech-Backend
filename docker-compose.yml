@@ -62,6 +62,8 @@ services:
       PORT: 8083
       MONGODB_URI: ${MONGODB_URI:?MONGODB_URI must be set in .env}
       PRODUCT_SERVICE_URL: http://product-service:8081
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      VNPAY_RETURN_URL: ${VNPAY_RETURN_URL:-http://localhost:8080/api/orders/payment/vnpay_return}
       SPRING_DATA_REDIS_HOST: redis
       SPRING_DATA_REDIS_PORT: 6379
     depends_on:

@@ -11,6 +11,10 @@ services:
     base-url: ${PRODUCT_SERVICE_URL:http://localhost:8081}
   auth:
     base-url: ${AUTH_SERVICE_URL:http://localhost:8080}
+app:
+  frontend-url: ${FRONTEND_URL:http://localhost:3000}
+  vnpay:
+    return-url: ${VNPAY_RETURN_URL:http://localhost:8080/api/orders/payment/vnpay_return}
 management:
   endpoints:
     web:

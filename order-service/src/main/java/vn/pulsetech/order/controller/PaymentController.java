@@ -45,7 +45,7 @@ public class PaymentController {
                         .build();
             } else {
                 // Payment failed or canceled
-                orderService.updateOrderStatus(orderId, 2); // 2 = FAILED
+                orderService.updateOrderStatus(orderId, 4); // 4 = cancelled/failed
                 return ResponseEntity.status(HttpStatus.FOUND)
                         .location(URI.create(frontendUrl + "/cart?payment_success=false"))
                         .build();

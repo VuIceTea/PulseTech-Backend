@@ -135,6 +135,7 @@ MAIL_STARTTLS=true
 MAIL_FROM=your-email@gmail.com
 
 FRONTEND_URL=http://localhost:3000
+VNPAY_RETURN_URL=http://localhost:8080/api/orders/payment/vnpay_return
 ```
 
 > **Gmail App Password:** Generate one at *Google Account → Security → 2-Step Verification → App Passwords*.
@@ -171,6 +172,7 @@ docker compose down
 | `MAIL_STARTTLS`       | auth-service                   | ✅                | Enable STARTTLS encryption (`true`)                 |
 | `MAIL_FROM`           | auth-service                   | ✅                | Sender address displayed in outgoing emails         |
 | `FRONTEND_URL`        | auth-service                   | ✅                | Frontend URL used to generate verification links    |
+| `VNPAY_RETURN_URL`    | order-service                  | ✅ *(production)* | Public VNPay callback URL through the API gateway   |
 | `AUTH_SERVICE_URL`    | api-gateway                    | ✅ *(Render)*     | Internal URL of the auth-service                    |
 | `PRODUCT_SERVICE_URL` | api-gateway, order-service     | ✅ *(Render)*     | Internal URL of the product-service                 |
 | `ORDER_SERVICE_URL`   | api-gateway                    | ✅ *(Render)*     | Internal URL of the order-service                   |
@@ -285,6 +287,8 @@ PORT=8080
 SERVICE=order-service
 MONGODB_URI=<your-atlas-uri>
 PRODUCT_SERVICE_URL=https://<product-service>.onrender.com
+FRONTEND_URL=https://pulse-tech-beryl.vercel.app
+VNPAY_RETURN_URL=https://<api-gateway>.onrender.com/api/orders/payment/vnpay_return
 ```
 
 > ℹ️ **Render Free Tier — Cold Starts:** Services automatically spin down after 15 minutes of inactivity. The first request after a cold start may take **30–50 seconds** to respond. This is expected behavior on the free tier.

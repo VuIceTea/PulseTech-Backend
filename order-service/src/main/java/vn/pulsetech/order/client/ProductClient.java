@@ -37,6 +37,6 @@ public class ProductClient {
     public record ProductSnapshot(String id, String name, long basePrice, int discount, String image,
             List<ColorVariant> colors, List<StorageVariant> storages) {
         public record ColorVariant(String name, String hex, String image) {}
-        public record StorageVariant(String name, long priceOffset) {}
+        public record StorageVariant(String name, long priceOffset, Integer stock) {}
     }
 }

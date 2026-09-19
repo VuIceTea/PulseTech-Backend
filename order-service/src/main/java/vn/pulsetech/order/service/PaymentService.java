@@ -21,8 +21,8 @@ public class PaymentService {
     @Value("${app.vnpay.url:https://sandbox.vnpayment.vn/paymentv2/vpcpay.html}")
     private String vnp_PayUrl;
     
-    @Value("${app.frontend-url:http://localhost:3000}")
-    private String frontendUrl;
+    @Value("${app.vnpay.return-url:http://localhost:8080/api/orders/payment/vnpay_return}")
+    private String vnpReturnUrl;
 
     public String createPaymentUrl(String orderId, long amount) {
         String vnp_Version = "2.1.0";
@@ -42,7 +42,7 @@ public class PaymentService {
         // This IP is fixed for simplicity as we don't haveHttpServletRequest easily accessible here
         vnp_Params.put("vnp_IpAddr", "127.0.0.1"); 
         
-        vnp_Params.put("vnp_ReturnUrl", "http://localhost:8080/api/orders/payment/vnpay_return");
+        vnp_Params.put("vnp_ReturnUrl", vnpReturnUrl);
 
         Calendar cld = Calendar.getInstance(TimeZone.getTimeZone("Etc/GMT+7"));
         SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
