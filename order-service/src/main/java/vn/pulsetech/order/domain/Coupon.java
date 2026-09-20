@@ -4,6 +4,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Locale;
 
 @Document(collection = "coupons")
 public record Coupon(
@@ -29,8 +30,15 @@ public record Coupon(
     }
     
     public boolean isAllowedFor(String email) {
-        if (assignedEmails == null || assignedEmails.isEmpty()) return true;
         if (email == null || email.isBlank()) return false;
-        return assignedEmails.contains(email.trim().toLowerCase());
+        return remainingUsesFor(email) > 0;
+    }
+
+    public int remainingUsesFor(String email) {
+        if (assignedEmails == null || assignedEmails.isEmpty() || email == null || email.isBlank()) return 0;
+        String normalizedEmail = email.trim().toLowerCase(Locale.ROOT);
+        return (int) assignedEmails.stream()
+                .filter(value -> value != null && normalizedEmail.equals(value.trim().toLowerCase(Locale.ROOT)))
+                .count();
     }
 }

@@ -22,6 +22,7 @@ public class CustomerOrder {
     private String transactionNo;
     private String bankCode;
     private String payDate;
+    private List<String> couponCodes = new ArrayList<>();
     private List<CustomerOrderItem> items = new ArrayList<>();
 
     protected CustomerOrder() {}
@@ -58,4 +59,8 @@ public class CustomerOrder {
     public String getPayDate() { return payDate; }
     public void setPayDate(String payDate) { this.payDate = payDate; }
     public List<CustomerOrderItem> getItems() { return items; }
+    public List<String> getCouponCodes() { return couponCodes == null ? List.of() : couponCodes; }
+    public void setCouponCodes(List<String> couponCodes) {
+        this.couponCodes = couponCodes == null ? new ArrayList<>() : new ArrayList<>(couponCodes);
+    }
 }

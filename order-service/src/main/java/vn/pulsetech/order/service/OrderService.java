@@ -15,8 +15,8 @@ import vn.pulsetech.order.repository.CustomerOrderRepository;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.Locale;
-import java.util.Optional;
 import java.util.Set;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
@@ -80,18 +80,21 @@ public class OrderService {
 
         Coupon productCoupon = null;
         Coupon shippingCoupon = null;
+        List<String> acceptedCouponCodes = new ArrayList<>();
         for (String couponCode : requestedCouponCodes(request)) {
             Coupon coupon = coupons.findByCode(couponCode)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mã giảm giá không tồn tại"));
             if (!coupon.isAllowedFor(request.customerEmail()) || !coupon.isValid() || productSubtotal < coupon.minOrderValue()) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mã giảm giá không hợp lệ hoặc đơn hàng chưa đủ điều kiện");
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mã giảm giá không hợp lệ, đã hết lượt hoặc đơn hàng chưa đủ điều kiện");
             }
             if (isShippingCoupon(coupon)) {
                 shippingCoupon = coupon;
             } else {
                 productCoupon = coupon;
             }
+            acceptedCouponCodes.add(coupon.code().trim().toUpperCase(Locale.ROOT));
         }
+        order.setCouponCodes(new ArrayList<>(new LinkedHashSet<>(acceptedCouponCodes)));
 
         if (productCoupon != null) {
             order.applyFixedDiscount(calculateDiscount(productCoupon, productSubtotal));
@@ -109,6 +112,7 @@ public class OrderService {
         order = orders.save(order);
 
         if ("COD".equals(paymentCode)) {
+            consumeCoupons(order);
             cartService.clearCart(order.getCustomerEmail());
         }
         
@@ -167,16 +171,46 @@ public class OrderService {
 
     public void completeOnlinePayment(String orderId, String transactionNo, String bankCode, String payDate) {
         orders.findById(orderId).ifPresent(order -> {
+            if (order.getStatus() == 1) {
+                return;
+            }
             order.setTransactionNo(transactionNo);
             order.setBankCode(bankCode);
             order.setPayDate(payDate);
             order.setStatus(1);
+            consumeCoupons(order);
             orders.save(order);
             // The backend is the source of truth for payment completion. Clear
             // the user's cart here so it still works if the browser closes or
             // refreshes before the frontend callback finishes.
             cartService.clearCart(order.getCustomerEmail());
         });
+    }
+
+    private void consumeCoupons(CustomerOrder order) {
+        String email = order.getCustomerEmail();
+        if (email == null || email.isBlank()) return;
+        String normalizedEmail = email.trim().toLowerCase(Locale.ROOT);
+        for (String couponCode : order.getCouponCodes()) {
+            if (couponCode == null || couponCode.isBlank()) continue;
+            coupons.findByCode(couponCode.trim().toUpperCase(Locale.ROOT)).ifPresent(coupon -> {
+                List<String> assignedEmails = coupon.assignedEmails();
+                if (assignedEmails == null || assignedEmails.isEmpty()) return;
+                List<String> remainingEmails = new ArrayList<>(assignedEmails);
+                for (int index = 0; index < remainingEmails.size(); index++) {
+                    String assignedEmail = remainingEmails.get(index);
+                    if (assignedEmail != null && normalizedEmail.equals(assignedEmail.trim().toLowerCase(Locale.ROOT))) {
+                        remainingEmails.remove(index);
+                        Coupon updated = new Coupon(coupon.id(), coupon.code(), coupon.description(),
+                                coupon.discountPercent(), coupon.discountAmount(), coupon.minOrderValue(),
+                                coupon.maxDiscountValue(), coupon.validFrom(), coupon.validUntil(),
+                                coupon.currentUsage() + 1, coupon.maxUsage(), coupon.isActive(), remainingEmails);
+                        coupons.save(updated);
+                        return;
+                    }
+                }
+            });
+        }
     }
 
     private String generateId() {
@@ -206,7 +240,7 @@ public class OrderService {
                     .map(code -> code.trim().toUpperCase(Locale.ROOT))
                     .forEach(codes::add);
         }
-        return codes;
+        return new ArrayList<>(new LinkedHashSet<>(codes));
     }
 
     private long calculateDiscount(Coupon coupon, long baseAmount) {

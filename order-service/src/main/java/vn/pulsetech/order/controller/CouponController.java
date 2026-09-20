@@ -5,7 +5,9 @@ import org.springframework.web.bind.annotation.*;
 import vn.pulsetech.order.domain.Coupon;
 import vn.pulsetech.order.repository.CouponRepository;
 import java.util.Optional;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -21,6 +23,9 @@ public class CouponController {
     public record ValidateCouponRequest(String code, long orderAmount, long shippingFee, List<String> productIds, String customerEmail) {}
     public record ValidateCouponResponse(boolean success, Object data) {}
     public record CouponDto(String code, long discountAmount, String discountType, String couponType, long finalAmount) {}
+    public record CouponView(String id, String code, String description, double discountPercent, double discountAmount,
+            long minOrderValue, long maxDiscountValue, LocalDateTime validFrom, LocalDateTime validUntil,
+            int currentUsage, int maxUsage, boolean isActive, List<String> assignedEmails, int count) {}
 
     @PostMapping("/validate")
     public ResponseEntity<ValidateCouponResponse> validateCoupon(@RequestBody ValidateCouponRequest request) {
@@ -31,7 +36,7 @@ public class CouponController {
         if (couponOpt.isPresent()) {
             Coupon c = couponOpt.get();
             if (!c.isAllowedFor(request.customerEmail())) {
-                return ResponseEntity.ok(new ValidateCouponResponse(false, "Mã giảm giá này không áp dụng cho tài khoản của bạn."));
+                return ResponseEntity.ok(new ValidateCouponResponse(false, "Mã giảm giá này không còn lượt sử dụng hoặc không áp dụng cho tài khoản của bạn."));
             }
             if (c.isValid() && request.orderAmount() >= c.minOrderValue()) {
                 String couponType = couponType(c);
@@ -77,10 +82,14 @@ public class CouponController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Coupon>> getAllCoupons(@RequestParam(required = false) String email) {
+    public ResponseEntity<List<?>> getAllCoupons(@RequestParam(required = false) String email) {
         List<Coupon> all = couponRepository.findAll();
         if (email != null && !email.isBlank()) {
-            return ResponseEntity.ok(all.stream().filter(c -> c.isAllowedFor(email)).toList());
+            return ResponseEntity.ok(all.stream()
+                    .filter(Coupon::isValid)
+                    .map(coupon -> toView(coupon, email))
+                    .filter(coupon -> coupon.count() > 0)
+                    .toList());
         }
         return ResponseEntity.ok(all);
     }
@@ -101,7 +110,7 @@ public class CouponController {
                 coupon.currentUsage(),
                 coupon.maxUsage() > 0 ? coupon.maxUsage() : 100,
                 coupon.isActive(),
-                coupon.assignedEmails()
+                normalizeEmails(coupon.assignedEmails())
         );
         return ResponseEntity.ok(couponRepository.save(newCoupon));
     }
@@ -124,7 +133,7 @@ public class CouponController {
                 coupon.currentUsage(),
                 coupon.maxUsage(),
                 coupon.isActive(),
-                coupon.assignedEmails()
+                normalizeEmails(coupon.assignedEmails())
         );
         return ResponseEntity.ok(couponRepository.save(updatedCoupon));
     }
@@ -136,5 +145,23 @@ public class CouponController {
             return ResponseEntity.ok().build();
         }
         return ResponseEntity.notFound().build();
+    }
+
+    private CouponView toView(Coupon coupon, String email) {
+        return new CouponView(coupon.id(), coupon.code(), coupon.description(), coupon.discountPercent(),
+                coupon.discountAmount(), coupon.minOrderValue(), coupon.maxDiscountValue(), coupon.validFrom(),
+                coupon.validUntil(), coupon.currentUsage(), coupon.maxUsage(), coupon.isActive(),
+                coupon.assignedEmails(), coupon.remainingUsesFor(email));
+    }
+
+    private List<String> normalizeEmails(List<String> emails) {
+        if (emails == null) return null;
+        List<String> normalized = new ArrayList<>();
+        for (String email : emails) {
+            if (email != null && !email.isBlank()) {
+                normalized.add(email.trim().toLowerCase(Locale.ROOT));
+            }
+        }
+        return normalized;
     }
 }
