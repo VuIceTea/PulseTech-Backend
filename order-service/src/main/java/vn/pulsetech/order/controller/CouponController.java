@@ -18,9 +18,9 @@ public class CouponController {
         this.couponRepository = couponRepository;
     }
 
-    public record ValidateCouponRequest(String code, long orderAmount, List<String> productIds, String customerEmail) {}
+    public record ValidateCouponRequest(String code, long orderAmount, long shippingFee, List<String> productIds, String customerEmail) {}
     public record ValidateCouponResponse(boolean success, Object data) {}
-    public record CouponDto(String code, long discountAmount, String discountType, long finalAmount) {}
+    public record CouponDto(String code, long discountAmount, String discountType, String couponType, long finalAmount) {}
 
     @PostMapping("/validate")
     public ResponseEntity<ValidateCouponResponse> validateCoupon(@RequestBody ValidateCouponRequest request) {
@@ -34,24 +34,46 @@ public class CouponController {
                 return ResponseEntity.ok(new ValidateCouponResponse(false, "Mã giảm giá này không áp dụng cho tài khoản của bạn."));
             }
             if (c.isValid() && request.orderAmount() >= c.minOrderValue()) {
-                long discountAmount = 0;
+                String couponType = couponType(c);
+                long discountBase = "SHIPPING".equals(couponType) ? Math.max(0, request.shippingFee()) : request.orderAmount();
                 String discountType = "FIXED";
-                if (c.discountPercent() > 0) {
-                    discountType = "PERCENTAGE";
-                    discountAmount = Math.round(request.orderAmount() * c.discountPercent() / 100.0);
-                    if (c.maxDiscountValue() > 0) {
-                        discountAmount = Math.min(discountAmount, c.maxDiscountValue());
-                    }
-                } else if (c.discountAmount() > 0) {
-                    discountAmount = Math.round(c.discountAmount());
-                }
-                long finalAmount = Math.max(0, request.orderAmount() - discountAmount);
-                return ResponseEntity.ok(new ValidateCouponResponse(true, new CouponDto(c.code(), discountAmount, discountType, finalAmount)));
+                if (c.discountPercent() > 0) discountType = "PERCENTAGE";
+                long discountAmount = calculateDiscount(c, discountBase);
+                long finalAmount = "SHIPPING".equals(couponType)
+                        ? request.orderAmount()
+                        : Math.max(0, request.orderAmount() - discountAmount);
+                return ResponseEntity.ok(new ValidateCouponResponse(true, new CouponDto(c.code(), discountAmount, discountType, couponType, finalAmount)));
             } else {
                 return ResponseEntity.ok(new ValidateCouponResponse(false, "Mã giảm giá không hợp lệ, đã hết hạn hoặc đơn hàng chưa đủ điều kiện."));
             }
         }
         return ResponseEntity.ok(new ValidateCouponResponse(false, "Mã giảm giá không tồn tại."));
+    }
+
+    private long calculateDiscount(Coupon coupon, long baseAmount) {
+        if (baseAmount <= 0) return 0;
+        if (coupon.discountPercent() > 0) {
+            long discount = Math.round(baseAmount * coupon.discountPercent() / 100.0);
+            if (coupon.maxDiscountValue() > 0) {
+                discount = Math.min(discount, coupon.maxDiscountValue());
+            }
+            return Math.min(discount, baseAmount);
+        }
+        if (coupon.discountAmount() > 0) {
+            return Math.min(Math.round(coupon.discountAmount()), baseAmount);
+        }
+        return 0;
+    }
+
+    private String couponType(Coupon coupon) {
+        String code = coupon.code() == null ? "" : coupon.code().toUpperCase();
+        String description = coupon.description() == null ? "" : coupon.description().toUpperCase();
+        if (code.contains("SHIP") || description.contains("VẬN CHUYỂN")
+                || description.contains("VAN CHUYEN") || description.contains("GIAO HÀNG")
+                || description.contains("GIAO HANG")) {
+            return "SHIPPING";
+        }
+        return "PRODUCT";
     }
 
     @GetMapping

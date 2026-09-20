@@ -14,9 +14,11 @@ import vn.pulsetech.order.repository.CouponRepository;
 import vn.pulsetech.order.repository.CustomerOrderRepository;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
+import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 @Service
@@ -73,24 +75,31 @@ public class OrderService {
             order.addItem(new CustomerOrderItem(product.id(), product.name(), price, itemRequest.quantity(),
                     image, itemRequest.color(), itemRequest.storage()));
         }
-        // Apply coupon discount from database
-        if (request.couponCode() != null && !request.couponCode().isBlank()) {
-            Optional<Coupon> couponOpt = coupons.findByCode(request.couponCode().trim().toUpperCase());
-            Coupon coupon = couponOpt.orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mã giảm giá không tồn tại"));
-            if (!coupon.isAllowedFor(request.customerEmail()) || !coupon.isValid() || order.getTotalPrice() < coupon.minOrderValue()) {
+        long productSubtotal = order.getTotalPrice();
+        long baseShippingFee = productSubtotal > 5_000_000 ? 0 : 30_000;
+
+        Coupon productCoupon = null;
+        Coupon shippingCoupon = null;
+        for (String couponCode : requestedCouponCodes(request)) {
+            Coupon coupon = coupons.findByCode(couponCode)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mã giảm giá không tồn tại"));
+            if (!coupon.isAllowedFor(request.customerEmail()) || !coupon.isValid() || productSubtotal < coupon.minOrderValue()) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mã giảm giá không hợp lệ hoặc đơn hàng chưa đủ điều kiện");
             }
-            if (coupon.discountPercent() > 0) {
-                long discount = Math.round(order.getTotalPrice() * coupon.discountPercent() / 100.0);
-                if (coupon.maxDiscountValue() > 0) {
-                    discount = Math.min(discount, coupon.maxDiscountValue());
-                }
-                order.applyFixedDiscount(discount);
-            } else if (coupon.discountAmount() > 0) {
-                order.applyFixedDiscount(Math.round(coupon.discountAmount()));
+            if (isShippingCoupon(coupon)) {
+                shippingCoupon = coupon;
+            } else {
+                productCoupon = coupon;
             }
         }
-        if (order.getTotalPrice() <= 5_000_000) order.addShipping(30_000);
+
+        if (productCoupon != null) {
+            order.applyFixedDiscount(calculateDiscount(productCoupon, productSubtotal));
+        }
+
+        long shippingDiscount = shippingCoupon == null ? 0 : calculateDiscount(shippingCoupon, baseShippingFee);
+        long payableShippingFee = Math.max(0, baseShippingFee - shippingDiscount);
+        if (payableShippingFee > 0) order.addShipping(payableShippingFee);
 
         String paymentUrl = null;
         if (!"COD".equals(paymentCode)) {
@@ -184,5 +193,42 @@ public class OrderService {
             case "bank" -> "Chuyển khoản ngân hàng";
             default -> "Thanh toán khi nhận hàng (COD)";
         };
+    }
+
+    private List<String> requestedCouponCodes(CreateOrderRequest request) {
+        List<String> codes = new ArrayList<>();
+        if (request.couponCode() != null && !request.couponCode().isBlank()) {
+            codes.add(request.couponCode().trim().toUpperCase(Locale.ROOT));
+        }
+        if (request.couponCodes() != null) {
+            request.couponCodes().stream()
+                    .filter(code -> code != null && !code.isBlank())
+                    .map(code -> code.trim().toUpperCase(Locale.ROOT))
+                    .forEach(codes::add);
+        }
+        return codes;
+    }
+
+    private long calculateDiscount(Coupon coupon, long baseAmount) {
+        if (baseAmount <= 0) return 0;
+        if (coupon.discountPercent() > 0) {
+            long discount = Math.round(baseAmount * coupon.discountPercent() / 100.0);
+            if (coupon.maxDiscountValue() > 0) {
+                discount = Math.min(discount, coupon.maxDiscountValue());
+            }
+            return Math.min(discount, baseAmount);
+        }
+        if (coupon.discountAmount() > 0) {
+            return Math.min(Math.round(coupon.discountAmount()), baseAmount);
+        }
+        return 0;
+    }
+
+    private boolean isShippingCoupon(Coupon coupon) {
+        String code = coupon.code() == null ? "" : coupon.code().toUpperCase(Locale.ROOT);
+        String description = coupon.description() == null ? "" : coupon.description().toUpperCase(Locale.ROOT);
+        return code.contains("SHIP") || description.contains("VẬN CHUYỂN")
+                || description.contains("VAN CHUYEN") || description.contains("GIAO HÀNG")
+                || description.contains("GIAO HANG");
     }
 }

@@ -17,6 +17,7 @@ public final class OrderDtos {
 
     public record CreateOrderRequest(@NotBlank String customerName, @NotBlank String customerEmail, @NotBlank String customerPhone,
             @NotBlank String address, @NotBlank String paymentMethod, String couponCode,
+            List<String> couponCodes,
             @NotEmpty List<@Valid OrderItemRequest> items) {}
     public record OrderItemRequest(@NotBlank String productId, @NotBlank String color,
             @NotBlank String storage, @Min(1) int quantity) {}
