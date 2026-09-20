@@ -26,13 +26,16 @@ public class OrderService {
     private final PaymentService paymentService;
     private final CouponRepository coupons;
     private final AuthClient authClient;
+    private final CartService cartService;
 
-    public OrderService(CustomerOrderRepository orders, ProductClient products, PaymentService paymentService, CouponRepository coupons, AuthClient authClient) {
+    public OrderService(CustomerOrderRepository orders, ProductClient products, PaymentService paymentService,
+            CouponRepository coupons, AuthClient authClient, CartService cartService) {
         this.orders = orders;
         this.products = products;
         this.paymentService = paymentService;
         this.coupons = coupons;
         this.authClient = authClient;
+        this.cartService = cartService;
     }
 
     public OrderResponse create(CreateOrderRequest request) {
@@ -95,6 +98,10 @@ public class OrderService {
         }
 
         order = orders.save(order);
+
+        if ("COD".equals(paymentCode)) {
+            cartService.clearCart(order.getCustomerEmail());
+        }
         
         int rewardPoints = (int) (order.getTotalPrice() / 1000);
         if (rewardPoints > 0) {
@@ -146,6 +153,20 @@ public class OrderService {
             order.setBankCode(bankCode);
             order.setPayDate(payDate);
             orders.save(order);
+        });
+    }
+
+    public void completeOnlinePayment(String orderId, String transactionNo, String bankCode, String payDate) {
+        orders.findById(orderId).ifPresent(order -> {
+            order.setTransactionNo(transactionNo);
+            order.setBankCode(bankCode);
+            order.setPayDate(payDate);
+            order.setStatus(1);
+            orders.save(order);
+            // The backend is the source of truth for payment completion. Clear
+            // the user's cart here so it still works if the browser closes or
+            // refreshes before the frontend callback finishes.
+            cartService.clearCart(order.getCustomerEmail());
         });
     }
 

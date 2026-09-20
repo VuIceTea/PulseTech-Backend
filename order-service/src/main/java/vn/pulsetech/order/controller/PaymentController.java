@@ -35,8 +35,7 @@ public class PaymentController {
         if (isValid) {
             if ("00".equals(vnp_ResponseCode)) {
                 // Payment successful
-                orderService.updateOrderPaymentInfo(orderId, allParams.get("vnp_TransactionNo"), allParams.get("vnp_BankCode"), allParams.get("vnp_PayDate"));
-                orderService.updateOrderStatus(orderId, 1); // 1 = PAID
+                orderService.completeOnlinePayment(orderId, allParams.get("vnp_TransactionNo"), allParams.get("vnp_BankCode"), allParams.get("vnp_PayDate"));
                 return ResponseEntity.status(HttpStatus.FOUND)
                         .location(URI.create(frontendUrl + "/cart?payment_success=true&orderId=" + orderId))
                         .build();
@@ -62,8 +61,7 @@ public class PaymentController {
                 && "0".equals(allParams.get("resultCode"))
                 && paymentService.verifyMomoSignature(allParams);
         if (successful) {
-            orderService.updateOrderPaymentInfo(orderId, allParams.get("transId"), "MOMO", allParams.get("responseTime"));
-            orderService.updateOrderStatus(orderId, 1);
+            orderService.completeOnlinePayment(orderId, allParams.get("transId"), "MOMO", allParams.get("responseTime"));
         } else if (orderId != null) {
             orderService.updateOrderStatus(orderId, 4);
         }
@@ -77,9 +75,8 @@ public class PaymentController {
                 && "0".equals(String.valueOf(allParams.get("resultCode")))
                 && paymentService.verifyMomoSignature(allParams);
         if (successful) {
-            orderService.updateOrderPaymentInfo(orderId, String.valueOf(allParams.get("transId")), "MOMO",
+            orderService.completeOnlinePayment(orderId, String.valueOf(allParams.get("transId")), "MOMO",
                     String.valueOf(allParams.get("responseTime")));
-            orderService.updateOrderStatus(orderId, 1);
         } else if (orderId != null) {
             orderService.updateOrderStatus(orderId, 4);
         }
@@ -90,8 +87,7 @@ public class PaymentController {
     public ResponseEntity<Void> stripeReturn(@RequestParam String orderId, @RequestParam("session_id") String sessionId) {
         boolean successful = paymentService.verifyStripeSession(sessionId, orderId);
         if (successful) {
-            orderService.updateOrderPaymentInfo(orderId, sessionId, "STRIPE", null);
-            orderService.updateOrderStatus(orderId, 1);
+            orderService.completeOnlinePayment(orderId, sessionId, "STRIPE", null);
         } else {
             orderService.updateOrderStatus(orderId, 4);
         }
