@@ -4,10 +4,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import vn.pulsetech.order.domain.Coupon;
 import vn.pulsetech.order.repository.CouponRepository;
-import java.util.Optional;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -32,27 +34,35 @@ public class CouponController {
         if (request.code() == null || request.code().isBlank()) {
             return ResponseEntity.ok(new ValidateCouponResponse(false, "Vui lòng nhập mã giảm giá."));
         }
-        Optional<Coupon> couponOpt = couponRepository.findByCode(request.code().toUpperCase().trim());
-        if (couponOpt.isPresent()) {
-            Coupon c = couponOpt.get();
-            if (!c.isAllowedFor(request.customerEmail())) {
-                return ResponseEntity.ok(new ValidateCouponResponse(false, "Mã giảm giá này không còn lượt sử dụng hoặc không áp dụng cho tài khoản của bạn."));
-            }
-            if (c.isValid() && request.orderAmount() >= c.minOrderValue()) {
-                String couponType = couponType(c);
-                long discountBase = "SHIPPING".equals(couponType) ? Math.max(0, request.shippingFee()) : request.orderAmount();
-                String discountType = "FIXED";
-                if (c.discountPercent() > 0) discountType = "PERCENTAGE";
-                long discountAmount = calculateDiscount(c, discountBase);
-                long finalAmount = "SHIPPING".equals(couponType)
-                        ? request.orderAmount()
-                        : Math.max(0, request.orderAmount() - discountAmount);
-                return ResponseEntity.ok(new ValidateCouponResponse(true, new CouponDto(c.code(), discountAmount, discountType, couponType, finalAmount)));
-            } else {
-                return ResponseEntity.ok(new ValidateCouponResponse(false, "Mã giảm giá không hợp lệ, đã hết hạn hoặc đơn hàng chưa đủ điều kiện."));
-            }
+        List<Coupon> matchingCoupons = couponRepository.findAllByCode(normalizeCode(request.code()));
+        if (matchingCoupons.isEmpty()) {
+            return ResponseEntity.ok(new ValidateCouponResponse(false, "Mã giảm giá không tồn tại."));
         }
-        return ResponseEntity.ok(new ValidateCouponResponse(false, "Mã giảm giá không tồn tại."));
+
+        Coupon c = matchingCoupons.stream()
+                .filter(coupon -> coupon.isValid() && request.orderAmount() >= coupon.minOrderValue())
+                .filter(coupon -> coupon.isAllowedFor(request.customerEmail()))
+                .min(Comparator.comparing(Coupon::validUntil))
+                .orElse(null);
+
+        if (c == null) {
+            boolean hasRemainingForCustomer = matchingCoupons.stream()
+                    .anyMatch(coupon -> coupon.remainingUsesFor(request.customerEmail()) > 0);
+            String message = hasRemainingForCustomer
+                    ? "Mã giảm giá không hợp lệ, đã hết hạn hoặc đơn hàng chưa đủ điều kiện."
+                    : "Mã giảm giá này không còn lượt sử dụng hoặc không áp dụng cho tài khoản của bạn.";
+            return ResponseEntity.ok(new ValidateCouponResponse(false, message));
+        }
+
+        String couponType = couponType(c);
+        long discountBase = "SHIPPING".equals(couponType) ? Math.max(0, request.shippingFee()) : request.orderAmount();
+        String discountType = c.discountPercent() > 0 ? "PERCENTAGE" : "FIXED";
+        long discountAmount = calculateDiscount(c, discountBase);
+        long finalAmount = "SHIPPING".equals(couponType)
+                ? request.orderAmount()
+                : Math.max(0, request.orderAmount() - discountAmount);
+        return ResponseEntity.ok(new ValidateCouponResponse(true,
+                new CouponDto(c.code(), discountAmount, discountType, couponType, finalAmount)));
     }
 
     private long calculateDiscount(Coupon coupon, long baseAmount) {
@@ -85,9 +95,26 @@ public class CouponController {
     public ResponseEntity<List<?>> getAllCoupons(@RequestParam(required = false) String email) {
         List<Coupon> all = couponRepository.findAll();
         if (email != null && !email.isBlank()) {
-            return ResponseEntity.ok(all.stream()
+            Map<String, CouponView> grouped = new LinkedHashMap<>();
+            all.stream()
                     .filter(Coupon::isValid)
-                    .map(coupon -> toView(coupon, email))
+                    .filter(coupon -> coupon.remainingUsesFor(email) > 0)
+                    .sorted(Comparator.comparing(Coupon::validUntil))
+                    .forEach(coupon -> {
+                        String key = normalizeCode(coupon.code());
+                        CouponView current = grouped.get(key);
+                        CouponView next = toView(coupon, email);
+                        if (current == null) {
+                            grouped.put(key, next);
+                        } else {
+                            grouped.put(key, new CouponView(current.id(), current.code(), current.description(),
+                                    current.discountPercent(), current.discountAmount(), current.minOrderValue(),
+                                    current.maxDiscountValue(), current.validFrom(), current.validUntil(),
+                                    current.currentUsage(), current.maxUsage(), current.isActive(),
+                                    current.assignedEmails(), current.count() + next.count()));
+                        }
+                    });
+            return ResponseEntity.ok(grouped.values().stream()
                     .filter(coupon -> coupon.count() > 0)
                     .toList());
         }
@@ -99,7 +126,7 @@ public class CouponController {
         String id = coupon.id() != null && !coupon.id().isEmpty() ? coupon.id() : UUID.randomUUID().toString();
         Coupon newCoupon = new Coupon(
                 id,
-                coupon.code().toUpperCase(),
+                normalizeCode(coupon.code()),
                 coupon.description(),
                 coupon.discountPercent(),
                 coupon.discountAmount(),
@@ -122,7 +149,7 @@ public class CouponController {
         }
         Coupon updatedCoupon = new Coupon(
                 id,
-                coupon.code().toUpperCase(),
+                normalizeCode(coupon.code()),
                 coupon.description(),
                 coupon.discountPercent(),
                 coupon.discountAmount(),
@@ -163,5 +190,9 @@ public class CouponController {
             }
         }
         return normalized;
+    }
+
+    private String normalizeCode(String code) {
+        return code == null ? "" : code.trim().toUpperCase(Locale.ROOT);
     }
 }

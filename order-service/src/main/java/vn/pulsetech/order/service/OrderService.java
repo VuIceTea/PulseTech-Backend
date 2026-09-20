@@ -15,6 +15,7 @@ import vn.pulsetech.order.repository.CustomerOrderRepository;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.Locale;
 import java.util.Set;
@@ -82,9 +83,16 @@ public class OrderService {
         Coupon shippingCoupon = null;
         List<String> acceptedCouponCodes = new ArrayList<>();
         for (String couponCode : requestedCouponCodes(request)) {
-            Coupon coupon = coupons.findByCode(couponCode)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mã giảm giá không tồn tại"));
-            if (!coupon.isAllowedFor(request.customerEmail()) || !coupon.isValid() || productSubtotal < coupon.minOrderValue()) {
+            List<Coupon> matchingCoupons = coupons.findAllByCode(couponCode);
+            if (matchingCoupons.isEmpty()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mã giảm giá không tồn tại");
+            }
+            Coupon coupon = matchingCoupons.stream()
+                    .filter(value -> value.isValid() && productSubtotal >= value.minOrderValue())
+                    .filter(value -> value.isAllowedFor(request.customerEmail()))
+                    .min(Comparator.comparing(Coupon::validUntil))
+                    .orElse(null);
+            if (coupon == null) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mã giảm giá không hợp lệ, đã hết lượt hoặc đơn hàng chưa đủ điều kiện");
             }
             if (isShippingCoupon(coupon)) {
@@ -193,7 +201,10 @@ public class OrderService {
         String normalizedEmail = email.trim().toLowerCase(Locale.ROOT);
         for (String couponCode : order.getCouponCodes()) {
             if (couponCode == null || couponCode.isBlank()) continue;
-            coupons.findByCode(couponCode.trim().toUpperCase(Locale.ROOT)).ifPresent(coupon -> {
+            coupons.findAllByCode(couponCode.trim().toUpperCase(Locale.ROOT)).stream()
+                    .filter(coupon -> coupon.remainingUsesFor(normalizedEmail) > 0)
+                    .min(Comparator.comparing(Coupon::validUntil))
+                    .ifPresent(coupon -> {
                 List<String> assignedEmails = coupon.assignedEmails();
                 if (assignedEmails == null || assignedEmails.isEmpty()) return;
                 List<String> remainingEmails = new ArrayList<>(assignedEmails);
