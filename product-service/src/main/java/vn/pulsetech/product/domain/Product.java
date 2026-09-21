@@ -36,6 +36,10 @@ public record Product(
         return new Product(id, name, brand, category, basePrice, originalPrice, discount, image, images, colors, storages, specs, description, content, rating, reviewsCount, isFeatured, isFlashSale, badge, newStock);
     }
 
+    public Product withStoragesAndStock(List<StorageVariant> newStorages, int newStock) {
+        return new Product(id, name, brand, category, basePrice, originalPrice, discount, image, images, colors, newStorages, specs, description, content, rating, reviewsCount, isFeatured, isFlashSale, badge, newStock);
+    }
+
     public Product withContent(String newContent) {
         return new Product(id, name, brand, category, basePrice, originalPrice, discount, image, images, colors, storages, specs, description, newContent, rating, reviewsCount, isFeatured, isFlashSale, badge, stock);
     }

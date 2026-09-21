@@ -10,8 +10,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.time.LocalDateTime;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/orders/coupons")
@@ -118,7 +120,28 @@ public class CouponController {
                     .filter(coupon -> coupon.count() > 0)
                     .toList());
         }
-        return ResponseEntity.ok(all);
+        Map<String, CouponView> grouped = new LinkedHashMap<>();
+        all.stream()
+                .sorted(Comparator.comparing(Coupon::validUntil))
+                .forEach(coupon -> {
+                    String key = normalizeCode(coupon.code());
+                    CouponView next = toAdminView(coupon);
+                    CouponView current = grouped.get(key);
+                    if (current == null) {
+                        grouped.put(key, next);
+                    } else {
+                        List<String> mergedEmails = new ArrayList<>();
+                        if (current.assignedEmails() != null) mergedEmails.addAll(current.assignedEmails());
+                        if (next.assignedEmails() != null) mergedEmails.addAll(next.assignedEmails());
+                    grouped.put(key, new CouponView(current.id(), current.code(), current.description(),
+                            current.discountPercent(), current.discountAmount(), current.minOrderValue(),
+                            current.maxDiscountValue(), current.validFrom(), current.validUntil(),
+                            current.currentUsage() + next.currentUsage(), current.maxUsage() + next.maxUsage(),
+                            current.isActive() || next.isActive(), mergedEmails,
+                            maxVoucherCountPerCustomer(mergedEmails)));
+                    }
+                });
+        return ResponseEntity.ok(grouped.values().stream().toList());
     }
 
     @PostMapping
@@ -179,6 +202,27 @@ public class CouponController {
                 coupon.discountAmount(), coupon.minOrderValue(), coupon.maxDiscountValue(), coupon.validFrom(),
                 coupon.validUntil(), coupon.currentUsage(), coupon.maxUsage(), coupon.isActive(),
                 coupon.assignedEmails(), coupon.remainingUsesFor(email));
+    }
+
+    private CouponView toAdminView(Coupon coupon) {
+        return new CouponView(coupon.id(), coupon.code(), coupon.description(), coupon.discountPercent(),
+                coupon.discountAmount(), coupon.minOrderValue(), coupon.maxDiscountValue(), coupon.validFrom(),
+                coupon.validUntil(), coupon.currentUsage(), coupon.maxUsage(), coupon.isActive(),
+                coupon.assignedEmails(), maxVoucherCountPerCustomer(coupon.assignedEmails()));
+    }
+
+    private int maxVoucherCountPerCustomer(List<String> assignedEmails) {
+        if (assignedEmails == null || assignedEmails.isEmpty()) {
+            return 0;
+        }
+
+        Map<String, Long> counts = assignedEmails.stream()
+                .filter(Objects::nonNull)
+                .map(email -> email.trim().toLowerCase())
+                .filter(email -> !email.isBlank())
+                .collect(Collectors.groupingBy(email -> email, LinkedHashMap::new, Collectors.counting()));
+
+        return counts.values().stream().mapToInt(Long::intValue).max().orElse(0);
     }
 
     private List<String> normalizeEmails(List<String> emails) {

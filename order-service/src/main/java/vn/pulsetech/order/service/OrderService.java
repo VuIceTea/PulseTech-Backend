@@ -120,6 +120,7 @@ public class OrderService {
         order = orders.save(order);
 
         if ("COD".equals(paymentCode)) {
+            decreaseStock(order);
             consumeCoupons(order);
             cartService.clearCart(order.getCustomerEmail());
         }
@@ -187,12 +188,19 @@ public class OrderService {
             order.setPayDate(payDate);
             order.setStatus(1);
             consumeCoupons(order);
+            decreaseStock(order);
             orders.save(order);
             // The backend is the source of truth for payment completion. Clear
             // the user's cart here so it still works if the browser closes or
             // refreshes before the frontend callback finishes.
             cartService.clearCart(order.getCustomerEmail());
         });
+    }
+
+    private void decreaseStock(CustomerOrder order) {
+        for (CustomerOrderItem item : order.getItems()) {
+            products.decreaseStock(item.getProductId(), item.getStorage(), item.getQty());
+        }
     }
 
     private void consumeCoupons(CustomerOrder order) {

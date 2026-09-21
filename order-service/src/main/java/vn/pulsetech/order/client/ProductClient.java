@@ -1,6 +1,7 @@
 package vn.pulsetech.order.client;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
@@ -8,6 +9,7 @@ import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Map;
 
 @Component
 public class ProductClient {
@@ -23,6 +25,24 @@ public class ProductClient {
         } catch (RestClientResponseException exception) {
             if (exception.getStatusCode().value() == 404) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Sản phẩm không tồn tại: " + productId);
+            }
+            throw unavailable();
+        } catch (RestClientException exception) {
+            throw unavailable();
+        }
+    }
+
+    public void decreaseStock(String productId, String storage, int quantity) {
+        try {
+            restClient.post().uri("/internal/products/{id}/stock/decrease", productId)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(Map.of("storage", storage, "quantity", quantity))
+                    .retrieve()
+                    .toBodilessEntity();
+        } catch (RestClientResponseException exception) {
+            if (exception.getStatusCode().is4xxClientError()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Không thể trừ tồn kho cho biến thể " + storage + " của sản phẩm " + productId);
             }
             throw unavailable();
         } catch (RestClientException exception) {
