@@ -29,7 +29,7 @@ public class CouponController {
     public record CouponDto(String code, long discountAmount, String discountType, String couponType, long finalAmount) {}
     public record CouponView(String id, String code, String description, double discountPercent, double discountAmount,
             long minOrderValue, long maxDiscountValue, LocalDateTime validFrom, LocalDateTime validUntil,
-            int currentUsage, int maxUsage, boolean isActive, List<String> assignedEmails, int count) {}
+            int currentUsage, int maxUsage, boolean isActive, List<String> assignedEmails, int count, int usedCount) {}
 
     @PostMapping("/validate")
     public ResponseEntity<ValidateCouponResponse> validateCoupon(@RequestBody ValidateCouponRequest request) {
@@ -99,8 +99,10 @@ public class CouponController {
         if (email != null && !email.isBlank()) {
             Map<String, CouponView> grouped = new LinkedHashMap<>();
             all.stream()
-                    .filter(Coupon::isValid)
-                    .filter(coupon -> coupon.remainingUsesFor(email) > 0)
+                    .filter(coupon -> coupon.isActive()
+                            && LocalDateTime.now().isAfter(coupon.validFrom())
+                            && LocalDateTime.now().isBefore(coupon.validUntil()))
+                    .filter(coupon -> coupon.isVisibleFor(email))
                     .sorted(Comparator.comparing(Coupon::validUntil))
                     .forEach(coupon -> {
                         String key = normalizeCode(coupon.code());
@@ -113,12 +115,11 @@ public class CouponController {
                                     current.discountPercent(), current.discountAmount(), current.minOrderValue(),
                                     current.maxDiscountValue(), current.validFrom(), current.validUntil(),
                                     current.currentUsage(), current.maxUsage(), current.isActive(),
-                                    current.assignedEmails(), current.count() + next.count()));
+                                    current.assignedEmails(), current.count() + next.count(),
+                                    current.usedCount() + next.usedCount()));
                         }
                     });
-            return ResponseEntity.ok(grouped.values().stream()
-                    .filter(coupon -> coupon.count() > 0)
-                    .toList());
+            return ResponseEntity.ok(grouped.values().stream().toList());
         }
         Map<String, CouponView> grouped = new LinkedHashMap<>();
         all.stream()
@@ -138,7 +139,8 @@ public class CouponController {
                             current.maxDiscountValue(), current.validFrom(), current.validUntil(),
                             current.currentUsage() + next.currentUsage(), current.maxUsage() + next.maxUsage(),
                             current.isActive() || next.isActive(), mergedEmails,
-                            maxVoucherCountPerCustomer(mergedEmails)));
+                            maxVoucherCountPerCustomer(mergedEmails),
+                            current.usedCount() + next.usedCount()));
                     }
                 });
         return ResponseEntity.ok(grouped.values().stream().toList());
@@ -160,7 +162,8 @@ public class CouponController {
                 coupon.currentUsage(),
                 coupon.maxUsage() > 0 ? coupon.maxUsage() : 100,
                 coupon.isActive(),
-                normalizeEmails(coupon.assignedEmails())
+                normalizeEmails(coupon.assignedEmails()),
+                normalizeEmails(coupon.usedEmails())
         );
         return ResponseEntity.ok(couponRepository.save(newCoupon));
     }
@@ -191,7 +194,8 @@ public class CouponController {
                 coupon.currentUsage(),
                 coupon.maxUsage(),
                 coupon.isActive(),
-                assignedEmails
+                assignedEmails,
+                normalizeEmails(existingCoupon.usedEmails())
         );
         return ResponseEntity.ok(couponRepository.save(updatedCoupon));
     }
@@ -209,14 +213,15 @@ public class CouponController {
         return new CouponView(coupon.id(), coupon.code(), coupon.description(), coupon.discountPercent(),
                 coupon.discountAmount(), coupon.minOrderValue(), coupon.maxDiscountValue(), coupon.validFrom(),
                 coupon.validUntil(), coupon.currentUsage(), coupon.maxUsage(), coupon.isActive(),
-                coupon.assignedEmails(), coupon.remainingUsesFor(email));
+                coupon.assignedEmails(), coupon.remainingUsesFor(email), coupon.usedCountFor(email));
     }
 
     private CouponView toAdminView(Coupon coupon) {
         return new CouponView(coupon.id(), coupon.code(), coupon.description(), coupon.discountPercent(),
                 coupon.discountAmount(), coupon.minOrderValue(), coupon.maxDiscountValue(), coupon.validFrom(),
                 coupon.validUntil(), coupon.currentUsage(), coupon.maxUsage(), coupon.isActive(),
-                coupon.assignedEmails(), maxVoucherCountPerCustomer(coupon.assignedEmails()));
+                coupon.assignedEmails(), maxVoucherCountPerCustomer(coupon.assignedEmails()),
+                coupon.usedEmails() == null ? 0 : coupon.usedEmails().size());
     }
 
     private int maxVoucherCountPerCustomer(List<String> assignedEmails) {

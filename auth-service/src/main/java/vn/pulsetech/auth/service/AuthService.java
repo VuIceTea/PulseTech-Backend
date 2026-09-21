@@ -55,6 +55,9 @@ public class AuthService {
     public UserResponse login(LoginRequest request) {
         AppUser user = users.findByEmailIgnoreCase(request.email().trim())
                 .orElseThrow(this::unauthorized);
+        if (user.isLocked()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Tài khoản đã bị khóa");
+        }
         if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
             throw unauthorized();
         }
@@ -97,6 +100,13 @@ public class AuthService {
 
     public void deleteUser(String id) {
         users.deleteById(id);
+    }
+
+    public UserResponse updateUserLocked(String id, boolean locked) {
+        AppUser user = users.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Người dùng không tồn tại"));
+        user.setLocked(locked);
+        return UserResponse.from(users.save(user));
     }
 
     private ResponseStatusException unauthorized() {

@@ -163,10 +163,29 @@ public class OrderService {
     }
 
     public void updateOrderStatus(String orderId, int status) {
-        orders.findById(orderId).ifPresent(order -> {
-            order.setStatus(status);
-            orders.save(order);
-        });
+        CustomerOrder order = orders.findById(orderId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy đơn hàng"));
+        int currentStatus = order.getStatus();
+        if (status < 0 || status > 4) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Trạng thái đơn hàng không hợp lệ");
+        }
+        if (currentStatus == 4) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Đơn hàng đã hủy không thể đổi trạng thái");
+        }
+        if (currentStatus == 3) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Đơn hàng đã giao không thể đổi trạng thái");
+        }
+        if (status == 4 && currentStatus > 1) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Chỉ có thể hủy đơn hàng trước khi giao hàng");
+        }
+        if (status < currentStatus) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Không thể chuyển đơn hàng về trạng thái trước đó");
+        }
+        if (status != 4 && status > currentStatus + 1) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Vui lòng cập nhật trạng thái theo đúng thứ tự");
+        }
+        order.setStatus(status);
+        orders.save(order);
     }
 
     public void updateOrderPaymentInfo(String orderId, String transactionNo, String bankCode, String payDate) {
@@ -215,15 +234,16 @@ public class OrderService {
                     .ifPresent(coupon -> {
                 List<String> assignedEmails = coupon.assignedEmails();
                 if (assignedEmails == null || assignedEmails.isEmpty()) return;
-                List<String> remainingEmails = new ArrayList<>(assignedEmails);
-                for (int index = 0; index < remainingEmails.size(); index++) {
-                    String assignedEmail = remainingEmails.get(index);
+                List<String> usedEmails = new ArrayList<>();
+                if (coupon.usedEmails() != null) usedEmails.addAll(coupon.usedEmails());
+                for (String assignedEmail : assignedEmails) {
                     if (assignedEmail != null && normalizedEmail.equals(assignedEmail.trim().toLowerCase(Locale.ROOT))) {
-                        remainingEmails.remove(index);
+                        usedEmails.add(normalizedEmail);
                         Coupon updated = new Coupon(coupon.id(), coupon.code(), coupon.description(),
                                 coupon.discountPercent(), coupon.discountAmount(), coupon.minOrderValue(),
                                 coupon.maxDiscountValue(), coupon.validFrom(), coupon.validUntil(),
-                                coupon.currentUsage() + 1, coupon.maxUsage(), coupon.isActive(), remainingEmails);
+                                coupon.currentUsage() + 1, coupon.maxUsage(), coupon.isActive(),
+                                assignedEmails, usedEmails);
                         coupons.save(updated);
                         return;
                     }
