@@ -167,9 +167,17 @@ public class CouponController {
 
     @PutMapping("/{id}")
     public ResponseEntity<Coupon> updateCoupon(@PathVariable String id, @RequestBody Coupon coupon) {
-        if (!couponRepository.existsById(id)) {
+        Coupon existingCoupon = couponRepository.findById(id).orElse(null);
+        if (existingCoupon == null) {
             return ResponseEntity.notFound().build();
         }
+
+        List<String> assignedEmails = new ArrayList<>();
+        List<String> existingEmails = normalizeEmails(existingCoupon.assignedEmails());
+        List<String> publishedEmails = uniqueEmails(normalizeEmails(coupon.assignedEmails()));
+        if (existingEmails != null) assignedEmails.addAll(existingEmails);
+        if (publishedEmails != null) assignedEmails.addAll(publishedEmails);
+
         Coupon updatedCoupon = new Coupon(
                 id,
                 normalizeCode(coupon.code()),
@@ -183,7 +191,7 @@ public class CouponController {
                 coupon.currentUsage(),
                 coupon.maxUsage(),
                 coupon.isActive(),
-                normalizeEmails(coupon.assignedEmails())
+                assignedEmails
         );
         return ResponseEntity.ok(couponRepository.save(updatedCoupon));
     }
@@ -234,6 +242,11 @@ public class CouponController {
             }
         }
         return normalized;
+    }
+
+    private List<String> uniqueEmails(List<String> emails) {
+        if (emails == null) return null;
+        return emails.stream().distinct().toList();
     }
 
     private String normalizeCode(String code) {
