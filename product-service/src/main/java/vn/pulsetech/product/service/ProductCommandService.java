@@ -1,18 +1,23 @@
 package vn.pulsetech.product.service;
 
 import org.springframework.stereotype.Service;
+import vn.pulsetech.product.domain.InventoryLog;
 import vn.pulsetech.product.domain.Product;
+import vn.pulsetech.product.repository.InventoryLogRepository;
 import vn.pulsetech.product.repository.ProductCatalogRepository;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 @Service
 public class ProductCommandService {
     private final ProductCatalogRepository repository;
+    private final InventoryLogRepository inventoryLogRepository;
 
-    public ProductCommandService(ProductCatalogRepository repository) {
+    public ProductCommandService(ProductCatalogRepository repository, InventoryLogRepository inventoryLogRepository) {
         this.repository = repository;
+        this.inventoryLogRepository = inventoryLogRepository;
     }
 
     public Product updateDiscount(String id, int discount) {
@@ -57,8 +62,44 @@ public class ProductCommandService {
                 if (safeStock < quantity) {
                     throw new IllegalArgumentException("Not enough stock for variant");
                 }
-                safeStock -= quantity;
-                updatedStorages.add(new Product.StorageVariant(storage.name(), storage.priceOffset(), safeStock, storage.specs()));
+                int newStock = safeStock - quantity;
+                inventoryLogRepository.save(new InventoryLog(null, product.id(), product.name(), storage.name(), safeStock, newStock, -quantity, "EXPORT", "System", LocalDateTime.now()));
+                safeStock = newStock;
+                updatedStorages.add(new Product.StorageVariant(storage.name(), storage.priceOffset(), storage.costPrice(), safeStock, storage.specs()));
+            } else {
+                updatedStorages.add(storage);
+            }
+            totalStock += safeStock;
+        }
+
+        if (!matched) {
+            throw new IllegalArgumentException("Storage variant not found");
+        }
+
+        return repository.save(product.withStoragesAndStock(updatedStorages, totalStock));
+    }
+
+    public Product incrementStorageStock(String productId, String storageName, int quantity, String reason) {
+        if (quantity <= 0) {
+            throw new IllegalArgumentException("Quantity must be greater than zero");
+        }
+        Product product = repository.findById(productId).orElseThrow(() -> new IllegalArgumentException("Product not found"));
+        if (product.storages() == null || product.storages().isEmpty()) {
+            throw new IllegalArgumentException("Product has no storage variants");
+        }
+
+        boolean matched = false;
+        int totalStock = 0;
+        List<Product.StorageVariant> updatedStorages = new ArrayList<>();
+        for (Product.StorageVariant storage : product.storages()) {
+            Integer stock = storage.stock();
+            int safeStock = stock == null ? 0 : stock;
+            if (storage.name().equals(storageName)) {
+                matched = true;
+                int newStock = safeStock + quantity;
+                inventoryLogRepository.save(new InventoryLog(null, product.id(), product.name(), storage.name(), safeStock, newStock, quantity, reason != null ? reason : "RETURN_RESTOCK", "System", LocalDateTime.now()));
+                safeStock = newStock;
+                updatedStorages.add(new Product.StorageVariant(storage.name(), storage.priceOffset(), storage.costPrice(), safeStock, storage.specs()));
             } else {
                 updatedStorages.add(storage);
             }

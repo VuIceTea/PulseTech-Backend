@@ -50,6 +50,16 @@ public class ProductClient {
         }
     }
 
+    public void increaseStock(String productId, String storage, int quantity, String reason) {
+        try {
+            restClient.post().uri("/internal/products/{id}/stock/increase", productId)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(Map.of("storage", storage, "quantity", quantity, "reason", reason != null ? reason : "RESTOCK"))
+                    .retrieve()
+                    .toBodilessEntity();
+        } catch (Exception ignored) {}
+    }
+
     private ResponseStatusException unavailable() {
         return new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Product Service tạm thời không khả dụng");
     }

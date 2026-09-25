@@ -13,6 +13,7 @@ public record Product(
         String category,
         long basePrice,
         long originalPrice,
+        long costPrice,
         int discount,
         String image,
         List<String> images,
@@ -29,19 +30,19 @@ public record Product(
         int stock
 ) {
     public Product withDiscountAndPrice(int newDiscount, long newBasePrice) {
-        return new Product(id, name, brand, category, newBasePrice, originalPrice, newDiscount, image, images, colors, storages, specs, description, content, rating, reviewsCount, isFeatured, isFlashSale, badge, stock);
+        return new Product(id, name, brand, category, newBasePrice, originalPrice, costPrice, newDiscount, image, images, colors, storages, specs, description, content, rating, reviewsCount, isFeatured, isFlashSale, badge, stock);
     }
 
     public Product withStock(int newStock) {
-        return new Product(id, name, brand, category, basePrice, originalPrice, discount, image, images, colors, storages, specs, description, content, rating, reviewsCount, isFeatured, isFlashSale, badge, newStock);
+        return new Product(id, name, brand, category, basePrice, originalPrice, costPrice, discount, image, images, colors, storages, specs, description, content, rating, reviewsCount, isFeatured, isFlashSale, badge, newStock);
     }
 
     public Product withStoragesAndStock(List<StorageVariant> newStorages, int newStock) {
-        return new Product(id, name, brand, category, basePrice, originalPrice, discount, image, images, colors, newStorages, specs, description, content, rating, reviewsCount, isFeatured, isFlashSale, badge, newStock);
+        return new Product(id, name, brand, category, basePrice, originalPrice, costPrice, discount, image, images, colors, newStorages, specs, description, content, rating, reviewsCount, isFeatured, isFlashSale, badge, newStock);
     }
 
     public Product withContent(String newContent) {
-        return new Product(id, name, brand, category, basePrice, originalPrice, discount, image, images, colors, storages, specs, description, newContent, rating, reviewsCount, isFeatured, isFlashSale, badge, stock);
+        return new Product(id, name, brand, category, basePrice, originalPrice, costPrice, discount, image, images, colors, storages, specs, description, newContent, rating, reviewsCount, isFeatured, isFlashSale, badge, stock);
     }
 
     public record ColorVariant(
@@ -54,6 +55,7 @@ public record Product(
     public record StorageVariant(
             String name,
             long priceOffset,
+            long costPrice,
             Integer stock,
             ProductSpec specs
     ) {}

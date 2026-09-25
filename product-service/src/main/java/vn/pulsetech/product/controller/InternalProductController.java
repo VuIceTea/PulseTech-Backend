@@ -15,11 +15,21 @@ public class InternalProductController {
     }
 
     public record StockDecreaseRequest(String storage, int quantity) {}
+    public record StockIncreaseRequest(String storage, int quantity, String reason) {}
 
     @PostMapping("/{id}/stock/decrease")
     public ResponseEntity<Product> decreaseStock(@PathVariable String id, @RequestBody StockDecreaseRequest request) {
         try {
             return ResponseEntity.ok(commandService.decrementStorageStock(id, request.storage(), request.quantity()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @PostMapping("/{id}/stock/increase")
+    public ResponseEntity<Product> increaseStock(@PathVariable String id, @RequestBody StockIncreaseRequest request) {
+        try {
+            return ResponseEntity.ok(commandService.incrementStorageStock(id, request.storage(), request.quantity(), request.reason()));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().build();
         }

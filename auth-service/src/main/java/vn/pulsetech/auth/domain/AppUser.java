@@ -4,6 +4,8 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import java.time.Instant;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 @Document(collection = "users")
 public class AppUser {
@@ -17,6 +19,7 @@ public class AppUser {
     private int rewardPoints;
     private Instant createdAt;
     private boolean locked;
+    private Set<String> roles;
 
     protected AppUser() {}
 
@@ -28,6 +31,7 @@ public class AppUser {
         this.rewardPoints = 0;
         this.createdAt = Instant.now();
         this.locked = false;
+        this.roles = new LinkedHashSet<>(Set.of("USER"));
     }
 
     public void markVerified() { this.verified = true; }
@@ -40,5 +44,10 @@ public class AppUser {
     public int getRewardPoints() { return rewardPoints; }
     public Instant getCreatedAt() { return createdAt; }
     public boolean isLocked() { return locked; }
+    public Set<String> getRoles() {
+        if (roles == null || roles.isEmpty()) roles = new LinkedHashSet<>(Set.of("USER"));
+        return roles;
+    }
+    public void setRoles(Set<String> roles) { this.roles = new LinkedHashSet<>(roles); }
     public void addRewardPoints(int points) { this.rewardPoints += points; }
 }

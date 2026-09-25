@@ -48,6 +48,9 @@ services:
       MAIL_STARTTLS: ${MAIL_STARTTLS:-false}
       MAIL_FROM: ${MAIL_FROM:?MAIL_FROM must be set in .env}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set in .env}
+      ADMIN_EMAILS: ${ADMIN_EMAILS:?ADMIN_EMAILS must be set in .env}
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY:?INTERNAL_API_KEY must be set in .env}
     expose:
       - "8082"
 
@@ -70,6 +73,7 @@ services:
       MOMO_ACCESS_KEY: ${MOMO_ACCESS_KEY:-}
       MOMO_SECRET_KEY: ${MOMO_SECRET_KEY:-}
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY:?INTERNAL_API_KEY must be set in .env}
       SPRING_DATA_REDIS_HOST: redis
       SPRING_DATA_REDIS_PORT: 6379
     depends_on:
