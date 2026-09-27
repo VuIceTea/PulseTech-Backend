@@ -12,7 +12,7 @@ public final class AuthDtos {
 
     public record RegisterRequest(@NotBlank String name, @Email @NotBlank String email,
                                   @Size(min = 6) String password) {}
-    public record LoginRequest(@Email @NotBlank String email, @NotBlank String password) {}
+    public record LoginRequest(@NotBlank String email, @NotBlank String password) {}
     public record UserResponse(String id, String name, String email, String phone, String dob, String gender, int rewardPoints,
                                boolean verified, boolean locked, Instant createdAt, Set<String> roles) {
         public static UserResponse from(AppUser user) {
