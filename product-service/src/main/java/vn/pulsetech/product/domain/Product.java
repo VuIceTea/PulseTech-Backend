@@ -13,7 +13,7 @@ public record Product(
         String category,
         long basePrice,
         long originalPrice,
-        long costPrice,
+        Long costPrice,
         int discount,
         String image,
         List<String> images,
@@ -55,7 +55,7 @@ public record Product(
     public record StorageVariant(
             String name,
             long priceOffset,
-            long costPrice,
+            Long costPrice,
             Integer stock,
             ProductSpec specs
     ) {}
