@@ -185,6 +185,10 @@ public class OrderService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Vui lòng cập nhật trạng thái theo đúng thứ tự");
         }
         order.setStatus(status);
+        if (status == 2 && (order.getTrackingCode() == null || order.getTrackingCode().isBlank())) {
+            order.setShippingCarrier("Giao Hàng Nhanh (GHN)");
+            order.setTrackingCode("GHN" + System.currentTimeMillis() % 100000000);
+        }
         orders.save(order);
     }
 

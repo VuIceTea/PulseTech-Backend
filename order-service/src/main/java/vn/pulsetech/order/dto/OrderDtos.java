@@ -25,7 +25,7 @@ public final class OrderDtos {
             String image, String color, String storage) {}
     public record OrderResponse(String id, int status, String customerName, String customerEmail, String customerPhone,
             String address, String paymentMethod, String createdAt, long totalPrice,
-            List<OrderItemResponse> items, String paymentUrl) {
+            List<OrderItemResponse> items, String paymentUrl, String shippingCarrier, String trackingCode) {
         public static OrderResponse from(CustomerOrder order) {
             return from(order, null);
         }
@@ -36,7 +36,7 @@ public final class OrderDtos {
                     order.getCustomerPhone(), order.getAddress(), order.getPaymentMethod(),
                     order.getCreatedAt().atZone(ZoneOffset.UTC).withZoneSameInstant(ZoneId.of("Asia/Ho_Chi_Minh"))
                             .format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm", Locale.forLanguageTag("vi-VN"))),
-                    order.getTotalPrice(), items, paymentUrl);
+                    order.getTotalPrice(), items, paymentUrl, order.getShippingCarrier(), order.getTrackingCode());
         }
     }
 }
