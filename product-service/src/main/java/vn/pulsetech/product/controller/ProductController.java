@@ -29,6 +29,13 @@ public class ProductController {
         return service.findAll(category, brand, search, featured, flashSale);
     }
 
+    @GetMapping("/low-stock")
+    public List<Product> getLowStockProducts(@RequestParam(defaultValue = "5") int threshold) {
+        return service.findAll(null, null, null, null, null).stream()
+                .filter(p -> p.stock() <= threshold)
+                .toList();
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<Product> getProduct(@PathVariable String id) {
         return service.findById(id).map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());

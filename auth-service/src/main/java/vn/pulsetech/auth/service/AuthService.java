@@ -83,7 +83,7 @@ public class AuthService {
             user = users.save(user);
         }
         JwtService.IssuedToken token = jwtService.issue(user.getId(), user.getEmail(), user.getRoles());
-        return new LoginResponse(user.getId(), user.getName(), user.getEmail(), user.getPhone(), user.getDob(), user.getGender(), user.getRewardPoints(),
+        return new LoginResponse(user.getId(), user.getName(), user.getEmail(), user.getPhone(), user.getDob(), user.getGender(), user.getRewardPoints(), user.getTier(),
                 user.isVerified(), user.isLocked(), user.getCreatedAt(), Set.copyOf(user.getRoles()),
                 token.value(), "Bearer", token.expiresAt());
     }

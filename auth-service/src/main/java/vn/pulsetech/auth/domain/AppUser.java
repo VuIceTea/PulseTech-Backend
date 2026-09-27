@@ -60,4 +60,10 @@ public class AppUser {
     public void setDob(String dob) { this.dob = dob; }
     public String getGender() { return gender; }
     public void setGender(String gender) { this.gender = gender; }
+    public String getTier() {
+        if (rewardPoints >= 15000) return "KIM_CUONG";
+        if (rewardPoints >= 5000) return "VANG";
+        if (rewardPoints >= 1000) return "BAC";
+        return "DONG";
+    }
 }

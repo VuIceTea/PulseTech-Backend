@@ -22,6 +22,13 @@ public class CustomerOrder {
     private String transactionNo;
     private String bankCode;
     private String payDate;
+    private String shippingCarrier; // GHN, GHTK, VIETTELPOST
+    private String trackingCode;
+    private boolean vatInvoiceRequested;
+    private String companyName;
+    private String taxCode;
+    private String companyAddress;
+    private String companyEmail;
     private List<String> couponCodes = new ArrayList<>();
     private List<CustomerOrderItem> items = new ArrayList<>();
 
@@ -58,6 +65,20 @@ public class CustomerOrder {
     public void setBankCode(String bankCode) { this.bankCode = bankCode; }
     public String getPayDate() { return payDate; }
     public void setPayDate(String payDate) { this.payDate = payDate; }
+    public String getShippingCarrier() { return shippingCarrier; }
+    public void setShippingCarrier(String shippingCarrier) { this.shippingCarrier = shippingCarrier; }
+    public String getTrackingCode() { return trackingCode; }
+    public void setTrackingCode(String trackingCode) { this.trackingCode = trackingCode; }
+    public boolean isVatInvoiceRequested() { return vatInvoiceRequested; }
+    public void setVatInvoiceRequested(boolean vatInvoiceRequested) { this.vatInvoiceRequested = vatInvoiceRequested; }
+    public String getCompanyName() { return companyName; }
+    public void setCompanyName(String companyName) { this.companyName = companyName; }
+    public String getTaxCode() { return taxCode; }
+    public void setTaxCode(String taxCode) { this.taxCode = taxCode; }
+    public String getCompanyAddress() { return companyAddress; }
+    public void setCompanyAddress(String companyAddress) { this.companyAddress = companyAddress; }
+    public String getCompanyEmail() { return companyEmail; }
+    public void setCompanyEmail(String companyEmail) { this.companyEmail = companyEmail; }
     public List<CustomerOrderItem> getItems() { return items; }
     public List<String> getCouponCodes() { return couponCodes == null ? List.of() : couponCodes; }
     public void setCouponCodes(List<String> couponCodes) {
