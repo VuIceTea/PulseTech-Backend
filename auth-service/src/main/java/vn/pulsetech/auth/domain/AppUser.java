@@ -20,6 +20,9 @@ public class AppUser {
     private Instant createdAt;
     private boolean locked;
     private Set<String> roles;
+    private String phone;
+    private String dob;
+    private String gender;
 
     protected AppUser() {}
 
@@ -50,4 +53,11 @@ public class AppUser {
     }
     public void setRoles(Set<String> roles) { this.roles = new LinkedHashSet<>(roles); }
     public void addRewardPoints(int points) { this.rewardPoints += points; }
+    public void setName(String name) { this.name = name; }
+    public String getPhone() { return phone; }
+    public void setPhone(String phone) { this.phone = phone; }
+    public String getDob() { return dob; }
+    public void setDob(String dob) { this.dob = dob; }
+    public String getGender() { return gender; }
+    public void setGender(String gender) { this.gender = gender; }
 }

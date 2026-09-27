@@ -83,9 +83,27 @@ public class AuthService {
             user = users.save(user);
         }
         JwtService.IssuedToken token = jwtService.issue(user.getId(), user.getEmail(), user.getRoles());
-        return new LoginResponse(user.getId(), user.getName(), user.getEmail(), user.getRewardPoints(),
+        return new LoginResponse(user.getId(), user.getName(), user.getEmail(), user.getPhone(), user.getDob(), user.getGender(), user.getRewardPoints(),
                 user.isVerified(), user.isLocked(), user.getCreatedAt(), Set.copyOf(user.getRoles()),
                 token.value(), "Bearer", token.expiresAt());
+    }
+
+    public UserResponse updateProfile(String email, UpdateProfileRequest request) {
+        AppUser user = users.findByEmailIgnoreCase(email.trim())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Người dùng không tồn tại"));
+        if (request.name() != null && !request.name().isBlank()) {
+            user.setName(request.name().trim());
+        }
+        if (request.phone() != null) {
+            user.setPhone(request.phone().trim());
+        }
+        if (request.dob() != null) {
+            user.setDob(request.dob().trim());
+        }
+        if (request.gender() != null) {
+            user.setGender(request.gender().trim());
+        }
+        return UserResponse.from(users.save(user));
     }
 
     public void addRewardPoints(String email, int points) {

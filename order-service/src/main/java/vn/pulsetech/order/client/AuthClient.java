@@ -17,11 +17,8 @@ public class AuthClient {
     public void addRewardPoints(String email, int points) {
         try {
             restClient.post()
+                    .uri("/api/auth/users/reward-points?email={email}&points={points}", email, points)
                     .header("X-Internal-Api-Key", internalApiKey)
-                    .uri(builder -> builder.path("/api/auth/users/reward-points")
-                            .queryParam("email", email)
-                            .queryParam("points", points)
-                            .build())
                     .retrieve()
                     .toBodilessEntity();
         } catch (Exception e) {

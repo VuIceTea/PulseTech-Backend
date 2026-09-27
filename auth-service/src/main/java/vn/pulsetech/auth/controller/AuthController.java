@@ -34,6 +34,11 @@ public class AuthController {
         return service.verify(token);
     }
 
+    @PutMapping("/profile")
+    public UserResponse updateProfile(@RequestParam String email, @RequestBody UpdateProfileRequest request) {
+        return service.updateProfile(email, request);
+    }
+
     @GetMapping("/admin/users")
     public java.util.List<UserResponse> getAllUsers() {
         return service.getAllUsers();

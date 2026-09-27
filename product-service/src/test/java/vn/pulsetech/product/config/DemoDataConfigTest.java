@@ -46,7 +46,7 @@ class DemoDataConfigTest {
     }
 
     private Product product(String id, String content) {
-        return new Product(id, "iPhone 15 Pro Max", "Apple", "phone", 1, 1, 0, "", List.of(),
+        return new Product(id, "iPhone 15 Pro Max", "Apple", "phone", 1, 1, 1, 0, "", List.of(),
                 List.of(), List.of(), new Product.ProductSpec("OLED", "iOS", "48 MP", "12 MP", "A17 Pro",
                 "8 GB", "256 GB", "4441 mAh", null, null, null, null, null, null, null, null, null),
                 "Mô tả", content, 0, 0, false, false, "", 25);

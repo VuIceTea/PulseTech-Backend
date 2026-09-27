@@ -9,5 +9,6 @@ import java.util.Optional;
 
 public interface FlashSaleRepository extends MongoRepository<FlashSale, String> {
     List<FlashSale> findByIsActiveTrueAndStartTimeBeforeAndEndTimeAfter(LocalDateTime now1, LocalDateTime now2);
+    Optional<FlashSale> findFirstByIsActiveTrue();
     Optional<FlashSale> findFirstByIsActiveTrueOrderByEndTimeAsc();
 }

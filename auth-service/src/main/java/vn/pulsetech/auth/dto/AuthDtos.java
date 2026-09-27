@@ -13,16 +13,17 @@ public final class AuthDtos {
     public record RegisterRequest(@NotBlank String name, @Email @NotBlank String email,
                                   @Size(min = 6) String password) {}
     public record LoginRequest(@Email @NotBlank String email, @NotBlank String password) {}
-    public record UserResponse(String id, String name, String email, int rewardPoints,
+    public record UserResponse(String id, String name, String email, String phone, String dob, String gender, int rewardPoints,
                                boolean verified, boolean locked, Instant createdAt, Set<String> roles) {
         public static UserResponse from(AppUser user) {
-            return new UserResponse(user.getId(), user.getName(), user.getEmail(), user.getRewardPoints(),
+            return new UserResponse(user.getId(), user.getName(), user.getEmail(), user.getPhone(), user.getDob(), user.getGender(), user.getRewardPoints(),
                     user.isVerified(), user.isLocked(), user.getCreatedAt(), Set.copyOf(user.getRoles()));
         }
     }
-    public record LoginResponse(String id, String name, String email, int rewardPoints,
+    public record LoginResponse(String id, String name, String email, String phone, String dob, String gender, int rewardPoints,
                                 boolean verified, boolean locked, Instant createdAt, Set<String> roles,
                                 String accessToken, String tokenType, Instant expiresAt) {}
+    public record UpdateProfileRequest(String name, String phone, String dob, String gender) {}
     public record LockRequest(boolean locked) {}
     public record RoleRequest(Set<String> roles) {}
     public record RegisterResponse(String email, String message) {}
