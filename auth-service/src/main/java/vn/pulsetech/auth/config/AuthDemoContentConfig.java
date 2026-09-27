@@ -26,6 +26,12 @@ public class AuthDemoContentConfig {
                 admin.setRoles(java.util.Set.of("ADMIN", "USER"));
                 userRepository.save(admin);
             }
+            if (!userRepository.existsByEmailIgnoreCase("customer")) {
+                AppUser customer = new AppUser("Khách Hàng Mẫu", "customer", passwordEncoder.encode("customer"));
+                customer.markVerified();
+                customer.setRoles(java.util.Set.of("USER"));
+                userRepository.save(customer);
+            }
         };
     }
 }

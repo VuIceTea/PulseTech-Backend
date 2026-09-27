@@ -25,27 +25,23 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
-        if (!request.getRequestURI().startsWith("/api/auth/admin/")) {
-            filterChain.doFilter(request, response);
-            return;
-        }
         String authorization = request.getHeader(HttpHeaders.AUTHORIZATION);
-        if (authorization == null || !authorization.startsWith("Bearer ")) {
-            writeError(response, 401, "Bạn cần đăng nhập bằng tài khoản quản trị");
-            return;
-        }
-        try {
-            JwtService.Claims claims = jwtService.verify(authorization.substring(7).trim());
-            if (!claims.roles().contains("ADMIN")) {
-                writeError(response, 403, "Tài khoản không có quyền ADMIN");
-                return;
+        if (authorization != null && authorization.startsWith("Bearer ")) {
+            try {
+                JwtService.Claims claims = jwtService.verify(authorization.substring(7).trim());
+                java.util.List<org.springframework.security.core.GrantedAuthority> authorities = claims.roles().stream()
+                        .map(role -> new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_" + role.toUpperCase()))
+                        .collect(java.util.stream.Collectors.toList());
+                org.springframework.security.authentication.UsernamePasswordAuthenticationToken authentication =
+                        new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(claims.email(), null, authorities);
+                org.springframework.security.core.context.SecurityContextHolder.getContext().setAuthentication(authentication);
+                request.setAttribute("adminEmail", claims.email());
+                request.setAttribute("adminUserId", claims.userId());
+            } catch (Exception ignored) {
+                org.springframework.security.core.context.SecurityContextHolder.clearContext();
             }
-            request.setAttribute("adminEmail", claims.email());
-            request.setAttribute("adminUserId", claims.userId());
-            filterChain.doFilter(request, response);
-        } catch (IllegalArgumentException exception) {
-            writeError(response, 401, "Access token không hợp lệ hoặc đã hết hạn");
         }
+        filterChain.doFilter(request, response);
     }
 
     private void writeError(HttpServletResponse response, int status, String message) throws IOException {
