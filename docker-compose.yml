@@ -3,7 +3,7 @@ name: pulsetech
 x-java-service: &java-service
   build:
     context: .
-    dockerfile: Dockerfile
+    dockerfile: Dockerfile.microservice
   restart: unless-stopped
   networks:
     - pulsetech-network
@@ -21,7 +21,7 @@ services:
     <<: *java-service
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.microservice
       args:
         SERVICE: product-service
     environment:
@@ -34,7 +34,7 @@ services:
     <<: *java-service
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.microservice
       args:
         SERVICE: auth-service
     environment:
@@ -58,7 +58,7 @@ services:
     <<: *java-service
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.microservice
       args:
         SERVICE: order-service
     environment:
@@ -88,7 +88,7 @@ services:
     <<: *java-service
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.microservice
       args:
         SERVICE: api-gateway
     environment:
