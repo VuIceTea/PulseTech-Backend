@@ -11,6 +11,7 @@ public class CustomerOrderItem {
     private String image;
     private String color;
     private String storage;
+    private java.util.List<String> imeis;
 
     protected CustomerOrderItem() {}
 
@@ -23,6 +24,7 @@ public class CustomerOrderItem {
         this.image = image;
         this.color = color;
         this.storage = storage;
+        this.imeis = new java.util.ArrayList<>();
     }
 
     public String getId() { return id; }
@@ -33,4 +35,6 @@ public class CustomerOrderItem {
     public String getImage() { return image; }
     public String getColor() { return color; }
     public String getStorage() { return storage; }
+    public java.util.List<String> getImeis() { return imeis; }
+    public void setImeis(java.util.List<String> imeis) { this.imeis = imeis; }
 }

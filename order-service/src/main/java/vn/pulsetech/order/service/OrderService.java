@@ -192,6 +192,18 @@ public class OrderService {
         orders.save(order);
     }
 
+    public void updateOrderImeis(String orderId, java.util.Map<String, java.util.List<String>> itemImeis) {
+        CustomerOrder order = orders.findById(orderId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy đơn hàng"));
+        
+        for (CustomerOrderItem item : order.getItems()) {
+            if (itemImeis.containsKey(item.getProductId())) {
+                item.setImeis(itemImeis.get(item.getProductId()));
+            }
+        }
+        orders.save(order);
+    }
+
     public void updateOrderPaymentInfo(String orderId, String transactionNo, String bankCode, String payDate) {
         orders.findById(orderId).ifPresent(order -> {
             order.setTransactionNo(transactionNo);

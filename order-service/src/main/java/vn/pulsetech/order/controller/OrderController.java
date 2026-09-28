@@ -41,4 +41,9 @@ public class OrderController {
     public void updateOrderStatus(@PathVariable String id, @RequestParam int status) {
         service.updateOrderStatus(id, status);
     }
+
+    @PatchMapping("/{id}/imeis")
+    public void updateOrderImeis(@PathVariable String id, @RequestBody java.util.Map<String, java.util.List<String>> itemImeis) {
+        service.updateOrderImeis(id, itemImeis);
+    }
 }
