@@ -1,0 +1,64 @@
+services:
+  - type: web
+    name: product-service
+    env: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    buildArgs:
+      - key: SERVICE
+        value: product-service
+    plan: free
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: PORT
+        value: 8081
+
+  - type: web
+    name: auth-service
+    env: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    buildArgs:
+      - key: SERVICE
+        value: auth-service
+    plan: free
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: PORT
+        value: 8082
+
+  - type: web
+    name: order-service
+    env: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    buildArgs:
+      - key: SERVICE
+        value: order-service
+    plan: free
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: PORT
+        value: 8083
+      - key: PRODUCT_SERVICE_URL
+        value: https://product-service.onrender.com
+
+  - type: web
+    name: api-gateway
+    env: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    buildArgs:
+      - key: SERVICE
+        value: api-gateway
+    plan: free
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: PORT
+        value: 8080
+      - key: PRODUCT_SERVICE_URL
+        value: https://product-service.onrender.com
+      - key: AUTH_SERVICE_URL
+        value: https://auth-service.onrender.com
+      - key: ORDER_SERVICE_URL
+        value: https://order-service.onrender.com
