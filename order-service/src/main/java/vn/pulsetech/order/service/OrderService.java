@@ -160,6 +160,15 @@ public class OrderService {
         }
         order.setStatus(4); // 4 = Cancelled
         orders.save(order);
+
+        // Hoàn tồn kho
+        if (order.getItems() != null) {
+            order.getItems().forEach(item -> {
+                try {
+                    products.increaseStock(item.getProductId(), item.getStorage(), item.getQty(), "UNPAID_CANCEL");
+                } catch (Exception ignored) {}
+            });
+        }
     }
 
     public void updateOrderStatus(String orderId, int status) {
@@ -190,6 +199,15 @@ public class OrderService {
             order.setTrackingCode("GHN" + System.currentTimeMillis() % 100000000);
         }
         orders.save(order);
+
+        // Hoàn tồn kho nếu Admin hủy
+        if (status == 4 && order.getItems() != null) {
+            order.getItems().forEach(item -> {
+                try {
+                    products.increaseStock(item.getProductId(), item.getStorage(), item.getQty(), "UNPAID_CANCEL");
+                } catch (Exception ignored) {}
+            });
+        }
     }
 
     public void updateOrderImeis(String orderId, java.util.Map<String, java.util.List<String>> itemImeis) {
